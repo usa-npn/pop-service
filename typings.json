@@ -1,0 +1,23 @@
+{
+  "name": "data download tool service",
+  "version": false,
+  "dependencies": {},
+  "globalDependencies": {
+    "archiver": "registry:dt/archiver#0.15.0+20160316155526",
+    "bunyan": "registry:dt/bunyan#0.0.0+20160412155112",
+    "config": "registry:dt/config#0.0.0+20160317120654",
+    "csv-parse": "registry:dt/csv-parse#1.1.0+20160602150508",
+    "csv-stringify": "registry:dt/csv-stringify#0.0.0+20160317120654",
+    "express": "registry:dt/express#4.0.0+20160317120654",
+    "express-serve-static-core": "registry:dt/express-serve-static-core#0.0.0+20160617060422",
+    "form-data": "registry:dt/form-data#0.0.0+20160316155526",
+    "graceful-fs": "registry:dt/graceful-fs#2.0.0+20160316155526",
+    "jsonstream": "registry:dt/jsonstream#0.8.0+20160316155526",
+    "mime": "registry:dt/mime#0.0.0+20160316155526",
+    "moment-node": "registry:dt/moment-node#2.11.1+20160511043338",
+    "morgan": "registry:dt/morgan#1.7.0+20160524142355",
+    "node": "registry:dt/node#6.0.0+20160621231320",
+    "request": "registry:dt/request#0.0.0+20160524135346",
+    "serve-static": "registry:dt/serve-static#0.0.0+20160606155157"
+  }
+}

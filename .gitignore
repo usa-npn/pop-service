@@ -1,0 +1,7 @@
+.idea
+node_modules
+typings
+logs/**
+downloads/**
+!.gitkeep
+!readme

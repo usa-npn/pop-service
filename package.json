@@ -1,0 +1,25 @@
+{
+  "name": "dot_service",
+  "version": "1.0.0",
+  "description": "builds data download zip for dot2",
+  "dependencies": {
+    "express": "latest",
+    "body-parser": "latest",
+    "request": "latest",
+    "config": "latest",
+    "csv": "latest",
+    "JSONStream": "latest",
+    "archiver": "latest",
+    "graceful-fs": "latest",
+    "morgan": "latest",
+    "bunyan": "latest",
+    "moment": "latest"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./built/server.js"
+  },
+  "author": "Jeff Switzer",
+  "license": "ISC"
+}

@@ -1,0 +1,22 @@
+default.json contains config shared across all environments.
+
+default.json can be extended based on an environment variable:
+export NODE_ENV=development
+export NODE_ENV=production
+export NODE_ENV=local-dev
+Then development.json, production.json, or local-dev.json will get merged into the default.json config file.
+
+config structure:
+{
+  "npn_portal_path": "location of npn portal endpoint",
+  "server_path": "path where client can find server",
+  "save_path": "path to save zips",
+  "logs_path": "path to save logs",
+  "protocol": "http or https",
+  "ssl_cert": "dir to ssl cert",
+  "ssl_key": "dir to ssl key",
+  "port": portNumber
+}
+
+For more details see
+https://www.npmjs.com/package/config
