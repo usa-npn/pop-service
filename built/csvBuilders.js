@@ -18,7 +18,7 @@ function createSearchParametersCsv(params, requestTimestamp) {
         // filter out unused params, beautify param keys, and convert array values to comma separated strings
         let paramsArray = [["Parameter", "Setting"]];
         for (var key in params) {
-            if (key === 'species_id' || key === 'additional_field' || key === 'request_src' || key === 'bottom_left_x1' || key === 'bottom_left_y1' || key === 'upper_right_x2' || key === 'upper_right_y2' || key === 'ancillary_data')
+            if (key === 'species_id' || key === 'additional_field' || key === 'request_src' || key === 'bottom_left_x1' || key === 'bottom_left_y1' || key === 'upper_right_x2' || key === 'upper_right_y2' || key === 'ancillary_data' || key === 'dataset_ids')
                 continue;
             if (params.hasOwnProperty(key) && params[key] && params[key] != [] && params[key] != '') {
                 if (params[key] instanceof Array)

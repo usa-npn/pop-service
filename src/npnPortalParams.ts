@@ -18,6 +18,8 @@ export interface NpnPortalParams {
     additionalFieldDisplay: string[];
     qualityFlags: string;
     network: string[];
+    integrated_datasets: string[];
+    dataset_ids: string[];
     ancillary_data: string[];
     [s: string]: (string | number | string[]);
 }
@@ -44,6 +46,7 @@ export function getNpnPortalParams(req: any): NpnPortalParams {
         qualityFlags: req.body.qualityFlags,
         network: req.body.partnerGroups,
         integrated_datasets: req.body.integrated_datasets,
+        dataset_ids: req.body.dataset_ids,
         ancillary_data: req.body.ancillary_data
     };
     return params;

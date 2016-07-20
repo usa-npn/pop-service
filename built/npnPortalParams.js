@@ -21,6 +21,7 @@ function getNpnPortalParams(req) {
         qualityFlags: req.body.qualityFlags,
         network: req.body.partnerGroups,
         integrated_datasets: req.body.integrated_datasets,
+        dataset_ids: req.body.dataset_ids,
         ancillary_data: req.body.ancillary_data
     };
     return params;

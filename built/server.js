@@ -39,10 +39,21 @@ var log = bunyan.createLogger({
         }
     ]
 });
+process.on('uncaughtException', (err) => {
+    log.error(err, "Could not produce zip file.");
+    console.error(err.stack);
+});
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
+});
+app.use((err, req, res, next) => {
+    log.error(err, "Could not produce zip file.");
+    console.error(err);
+    res.send({ download_path: 'error' });
+    // console.error(err.stack);
+    // res.status(500).send('Something broke!');
 });
 function convertSetToArray(set) {
     let array = [];
