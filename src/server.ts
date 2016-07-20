@@ -122,7 +122,8 @@ async function getZippedData(req: any) {
                 csvFileNames.push((await createCsv("observations/getDatasetDetails.json", {"dataset_id": convertSetToArray(datasets)}, 'dataset_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
             }
         }
-        let zipFileName = await createZip(csvFileNames, requestTimestamp);
+       
+        let zipFileName = await createZip(params.downloadType, csvFileNames, requestTimestamp);
         for(var csvFile of csvFileNames) {
             fs.unlink(config.get('save_path') + csvFile, (err: any) => {
                 if (err) throw err;

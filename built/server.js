@@ -117,7 +117,7 @@ function getZippedData(req) {
                     csvFileNames.push((yield csvBuilders_1.createCsv("observations/getDatasetDetails.json", { "dataset_id": convertSetToArray(csvBuilders_1.datasets) }, 'dataset_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
                 }
             }
-            let zipFileName = yield zipBuilder_1.createZip(csvFileNames, requestTimestamp);
+            let zipFileName = yield zipBuilder_1.createZip(params.downloadType, csvFileNames, requestTimestamp);
             for (var csvFile of csvFileNames) {
                 fs.unlink(config.get('save_path') + csvFile, (err) => {
                     if (err)

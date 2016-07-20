@@ -3,7 +3,7 @@ var config = require("config");
 var fs = require('graceful-fs');
 
 
-export function createZip(filesToZip: string[], requestTimestamp: number) {
+export function createZip(downloadType: string, filesToZip: string[], requestTimestamp: number) {
     return new Promise<string>((resolve, reject) => {
         let zipFileName = 'datasheet_' + requestTimestamp.toString() + '.zip';
         let zipFilePath = config.get('save_path') + zipFileName;
@@ -24,6 +24,15 @@ export function createZip(filesToZip: string[], requestTimestamp: number) {
         for(var fileName of filesToZip) {
             let fileNameWithoutTimestamp = fileName.replace(/[0-9]/g, "");
             archive.append(fs.createReadStream(config.get('save_path') + fileName), { name: fileNameWithoutTimestamp });
+        }
+        if(downloadType === 'Raw') {
+            archive.append(fs.createReadStream(config.get('metadata_path') + 'raw_metadata.xlsx'), { name: 'raw_metadata.xlsx' });
+        }
+        else if(downloadType === 'Site-Level Summarized') {
+            archive.append(fs.createReadStream(config.get('metadata_path') + 'site-summarized_metadata.xlsx'), { name: 'site-summarized_metadata.xlsx' });
+        }
+        else if(downloadType === 'Individual-Level Summarized') {
+            archive.append(fs.createReadStream(config.get('metadata_path') + 'individual-summarized_metadata.xlsx'), { name: 'individual-summarized_metadata.xlsx' });
         }
         archive.finalize();
     });
