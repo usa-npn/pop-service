@@ -48,6 +48,7 @@ var headerMappings = {
     "se_numdays_until_next_no": "SE_NumDays_Until_Next_No",
     "sd_numdays_until_next_no": "SD_NumDays_Until_Next_No",
     "num_individuals_with_multiple_firsty": "Num_Individuals_with_Multiple_FirstY",
+    // "individuals_ids_with_multiple_firsty": "Multiple_FirstY_Individual_IDs",
     "observation_date": "Observation_Date",
     "phenophase_status": "Phenophase_Status",
     "dataset_id": "Dataset_ID",

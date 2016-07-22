@@ -96,6 +96,7 @@ function createCsv(serviceCall, params, csvFileName, observationsCsv, writeHeade
                         callback();
                     });
                 };
+                // data.on('data', (dd: any) => console.log('hello' + dd));
                 data.pipe(JSONStream.parse('*')).pipe(objectStream);
                 data.on('close', () => {
                     reject("The connection was closed before the response was sent!");
