@@ -1,10 +1,10 @@
 "use strict";
 var archiver = require('archiver');
-var fs = require("fs");
 var config = require("config");
-function createZip(filesToZip, requestTimestamp) {
+var fs = require('graceful-fs');
+function createZip(downloadType, filesToZip, requestTimestamp) {
     return new Promise(function (resolve, reject) {
-        var zipFileName = 'observations_' + requestTimestamp.toString() + '.zip';
+        var zipFileName = 'datasheet_' + requestTimestamp.toString() + '.zip';
         var zipFilePath = config.get('save_path') + zipFileName;
         var zipStream = fs.createWriteStream(zipFilePath);
         var archive = archiver.create('zip', {});
@@ -18,7 +18,17 @@ function createZip(filesToZip, requestTimestamp) {
         archive.pipe(zipStream);
         for (var _i = 0, filesToZip_1 = filesToZip; _i < filesToZip_1.length; _i++) {
             var fileName = filesToZip_1[_i];
-            archive.append(fs.createReadStream(config.get('save_path') + fileName), { name: fileName });
+            var fileNameWithoutTimestamp = fileName.replace(/[0-9]/g, "");
+            archive.append(fs.createReadStream(config.get('save_path') + fileName), { name: fileNameWithoutTimestamp });
+        }
+        if (downloadType === 'Raw' && fs.existsSync(config.get('metadata_path') + 'raw_status_observation_metadata.xlsx')) {
+            archive.append(fs.createReadStream(config.get('metadata_path') + 'raw_status_observation_metadata.xlsx'), { name: 'raw_status_observation_metadata.xlsx' });
+        }
+        else if (downloadType === 'Site-Level Summarized' && fs.existsSync(config.get('metadata_path') + 'site-level_summarized_observation_metadata.xlsx')) {
+            archive.append(fs.createReadStream(config.get('metadata_path') + 'site-level_summarized_observation_metadata.xlsx'), { name: 'site-level_summarized_observation_metadata.xlsx' });
+        }
+        else if (downloadType === 'Individual-Level Summarized' && fs.existsSync(config.get('metadata_path') + 'individual-level_summarized_observation_metadata.xlsx')) {
+            archive.append(fs.createReadStream(config.get('metadata_path') + 'individual-level_summarized_observation_metadata.xlsx'), { name: 'individual-level_summarized_observation_metadata.xlsx' });
         }
         archive.finalize();
     });

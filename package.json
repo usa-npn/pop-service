@@ -1,19 +1,20 @@
 {
-  "name": "dot_service",
+  "name": "pop-service",
   "version": "1.0.0",
-  "description": "builds data download zip for dot2",
+  "description": "server for phenology observation portal",
   "dependencies": {
-    "express": "latest",
-    "body-parser": "latest",
-    "request": "latest",
-    "config": "latest",
-    "csv": "latest",
     "JSONStream": "latest",
     "archiver": "latest",
-    "graceful-fs": "latest",
-    "morgan": "latest",
+    "body-parser": "latest",
     "bunyan": "latest",
-    "moment": "latest"
+    "config": "latest",
+    "csv": "latest",
+    "express": "latest",
+    "graceful-fs": "latest",
+    "moment": "latest",
+    "morgan": "latest",
+    "mysql": "^2.11.1",
+    "request": "latest"
   },
   "main": "index.js",
   "scripts": {

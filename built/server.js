@@ -20,6 +20,14 @@ var http = require('http');
 var https = require('https');
 var fs = require('graceful-fs');
 var moment = require('moment');
+var crypto = require('crypto');
+var mysql = require('mysql');
+var connection = mysql.createConnection({
+    host: config.get('mysql_host'),
+    user: config.get('mysql_user'),
+    password: config.get('mysql_password'),
+    database: config.get('mysql_database')
+});
 let app = express();
 // allows us to consume json from post requests
 app.use(bodyParser.json());
@@ -40,7 +48,7 @@ var log = bunyan.createLogger({
     ]
 });
 process.on('uncaughtException', (err) => {
-    log.error(err, "Could not produce zip file.");
+    log.error(err, "Something Broke!.");
     console.error(err.stack);
 });
 app.use((req, res, next) => {
@@ -49,7 +57,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use((err, req, res, next) => {
-    log.error(err, "Could not produce zip file.");
+    log.error(err, "Something broke!.");
     console.error(err);
     res.send({ download_path: 'error' });
     // console.error(err.stack);
@@ -134,7 +142,7 @@ function getZippedData(req) {
         }
     });
 }
-app.post("/dot/download", (req, res) => {
+app.post("/pop/download", (req, res) => {
     console.log("in /dot/download");
     getZippedData(req)
         .then(zipFile => {
@@ -144,6 +152,53 @@ app.post("/dot/download", (req, res) => {
         .catch(err => {
         console.error(err);
         res.send({ download_path: 'error' });
+    });
+});
+app.get("/pop/search", (req, res) => {
+    console.log("get /dot/search");
+    let hashedJson = req.query.searchId;
+    connection.query('SELECT JSON from Pop_Search WHERE Hash = ?', hashedJson, (err, result) => {
+        if (err)
+            throw err;
+        if (result[0]) {
+            res.send(JSON.parse(result[0].JSON));
+        }
+        else {
+            res.send(null);
+        }
+    });
+});
+app.post("/pop/search", (req, res) => {
+    console.log("post /dot/search");
+    // CREATE TABLE usanpn2.Pop_Search (Search_ID INT(11) NOT NULL AUTO_INCREMENT, Hash TEXT, Json TEXT, Save_Count INT(11), PRIMARY KEY(Search_ID));
+    let foundHash = false;
+    let saveCount = 1;
+    let saveJson = JSON.stringify(req.body.searchJson); //"{test: 'sfsdsdgi', test2: 'sdfsgs'}";
+    let hashedJson = crypto.createHash('md5').update(saveJson).digest('hex');
+    connection.query('SELECT * from Pop_Search WHERE Hash = ?', hashedJson, (err, result) => {
+        if (err)
+            throw err;
+        if (result[0]) {
+            foundHash = true;
+            saveCount = result[0].Save_Count;
+        }
+        if (!foundHash) {
+            var popSearch = { Hash: hashedJson, Json: saveJson, Save_Count: saveCount };
+            connection.query('INSERT INTO Pop_Search SET ?', popSearch, (err, result) => {
+                if (err)
+                    throw err;
+                console.log('Last insert:', result);
+                res.send({ saved_search_hash: hashedJson });
+            });
+        }
+        else {
+            connection.query('Update Pop_Search SET Save_count = ? WHERE Hash = ?', [saveCount + 1, hashedJson], (err, result) => {
+                if (err)
+                    throw err;
+                console.log('Last insert:', result);
+                res.send({ saved_search_hash: hashedJson });
+            });
+        }
     });
 });
 if (config.get('protocol') === 'https') {
@@ -160,5 +215,6 @@ else {
 }
 server.listen(config.get('port'), () => {
     console.log("Server listening on port " + config.get("port"));
+    connection.connect();
 });
 //# sourceMappingURL=server.js.map
