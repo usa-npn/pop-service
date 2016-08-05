@@ -5,3 +5,7 @@ logs/**
 downloads/**
 !.gitkeep
 !readme
+config/default.json
+config/local-dev.json
+nbproject/**
+npm-debug.log

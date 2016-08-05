@@ -58,7 +58,7 @@ interface ParamNamesBeautified {
 
 export var paramNamesBeautified: ParamNamesBeautified = {
     request_src: 'Request Source:',
-    downloadType: 'Report Type:',
+    downloadType: 'Data Type:',
     start_date: 'Start Date:',
     end_date: 'End Date:',
     num_days_quality_filter: 'Data Precision Filter:',

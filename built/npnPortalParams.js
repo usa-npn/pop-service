@@ -29,7 +29,7 @@ function getNpnPortalParams(req) {
 exports.getNpnPortalParams = getNpnPortalParams;
 exports.paramNamesBeautified = {
     request_src: 'Request Source:',
-    downloadType: 'Report Type:',
+    downloadType: 'Data Type:',
     start_date: 'Start Date:',
     end_date: 'End Date:',
     num_days_quality_filter: 'Data Precision Filter:',
