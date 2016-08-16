@@ -48,6 +48,9 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       // used to know when to write csv header row
       let firstRow = writeHeader;
       let headerWrote = false;
+      
+      // don't want npnportal to change things like < to &amp;&lt;
+      params.noHtmlEncoding = true;
 
       let postUrl = config.get('npn_portal_path') + serviceCall;
       console.log("Making request to: " + postUrl);
