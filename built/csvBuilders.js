@@ -7,12 +7,6 @@ var JSONStream = require("JSONStream");
 const npnPortalParams_1 = require('./npnPortalParams');
 const headerMappings_1 = require('./headerMappings');
 var fs = require('graceful-fs');
-exports.sites = new Set();
-exports.individuals = new Set();
-exports.observers = new Set();
-exports.groups = new Set();
-exports.phenophases = new Set();
-exports.datasets = new Set();
 function createSearchParametersCsv(params, requestTimestamp) {
     return new Promise((resolve, reject) => {
         // filter out unused params, beautify param keys, and convert array values to comma separated strings
@@ -43,7 +37,7 @@ function createSearchParametersCsv(params, requestTimestamp) {
     });
 }
 exports.createSearchParametersCsv = createSearchParametersCsv;
-function createCsv(serviceCall, params, csvFileName, observationsCsv, writeHeader) {
+function createCsv(serviceCall, params, csvFileName, observationsCsv, writeHeader, sites, individuals, observers, groups, phenophases, datasets) {
     return new Promise((resolve, reject) => {
         try {
             console.log("Building csv: " + csvFileName);
@@ -69,21 +63,21 @@ function createCsv(serviceCall, params, csvFileName, observationsCsv, writeHeade
                 objectStream._write = (chunk, encoding, callback) => {
                     if (observationsCsv) {
                         // save some info to produce other csv files
-                        exports.sites.add(chunk.site_id);
-                        exports.individuals.add(chunk.individual_id);
+                        sites.add(chunk.site_id);
+                        individuals.add(chunk.individual_id);
                         let observedByPersonIds = chunk.observedby_person_id;
                         if (observedByPersonIds) {
                             if (observedByPersonIds.split) {
                                 for (var observerId of observedByPersonIds.split(',')) {
-                                    exports.observers.add(observerId.replace(/'/g, ""));
+                                    observers.add(observerId.replace(/'/g, ""));
                                 }
                             }
                             else
-                                exports.observers.add(observedByPersonIds);
+                                observers.add(observedByPersonIds);
                         }
-                        exports.groups.add(chunk.observation_group_id);
-                        exports.phenophases.add(chunk.phenophase_id);
-                        exports.datasets.add(chunk.dataset_id);
+                        groups.add(chunk.observation_group_id);
+                        phenophases.add(chunk.phenophase_id);
+                        datasets.add(chunk.dataset_id);
                     }
                     csv.stringify([chunk], { header: firstRow }, (err, data) => {
                         if (firstRow) {

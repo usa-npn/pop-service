@@ -7,12 +7,6 @@ import {NpnPortalParams, paramNamesBeautified} from './npnPortalParams';
 import {renameHeaders} from './headerMappings';
 var fs = require('graceful-fs');
 
-export var sites:Set<number> = new Set();
-export var individuals:Set<number> = new Set();
-export var observers:Set<number> = new Set();
-export var groups:Set<number> = new Set();
-export var phenophases:Set<number> = new Set();
-export var datasets:Set<number> = new Set();
 
 export function createSearchParametersCsv(params: NpnPortalParams, requestTimestamp: number) {
   return new Promise<string>((resolve, reject) => {
@@ -43,7 +37,8 @@ export function createSearchParametersCsv(params: NpnPortalParams, requestTimest
   });
 }
 
-export function createCsv(serviceCall: string, params: any, csvFileName: string, observationsCsv: boolean, writeHeader: boolean) {
+export function createCsv(serviceCall: string, params: any, csvFileName: string, observationsCsv: boolean, writeHeader: boolean, 
+                          sites: Set<number>, individuals: Set<number>, observers: Set<number>, groups: Set<number>, phenophases: Set<number>, datasets: Set<number>) {
   return new Promise<[string, boolean]>((resolve, reject) => {
     try {
       console.log("Building csv: " + csvFileName);
