@@ -4,8 +4,8 @@ function renameHeaders(sheetName, headerString) {
     let rows = headerString.split("\n");
     let headers = rows[0].split(",");
     for (var header of headers) {
-        //        headerString = headerString.replace(header, headerMappings[header]);
-        headerString = headerString.replace(header, sheetMappings[sheetName][header]);
+        if (sheetMappings[sheetName][header])
+            headerString = headerString.replace(header, sheetMappings[sheetName][header]);
     }
     return headerString;
 }

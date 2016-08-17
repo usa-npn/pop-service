@@ -4,8 +4,9 @@ export function renameHeaders(sheetName : string, headerString: string): string 
     let headers = rows[0].split(",");
     for(var header of headers)
     {
-//        headerString = headerString.replace(header, headerMappings[header]);
-        headerString = headerString.replace(header, sheetMappings[sheetName][header]);
+        if(sheetMappings[sheetName][header])
+            headerString = headerString.replace(header, sheetMappings[sheetName][header]);
+
     }
     return headerString;
 }
@@ -13,6 +14,7 @@ export function renameHeaders(sheetName : string, headerString: string): string 
 interface HeaderMappings {
     [key: string]: string;
 }
+
 
 interface SheetMappings{
     [key: string] : HeaderMappings;
