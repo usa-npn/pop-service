@@ -71,6 +71,7 @@ function convertSetToArray(set: Set<any>) {
     return array;
 }
 
+
 function getObservationsServiceCall(reportType: string): string {
     if (reportType === 'Raw')
         return 'observations/getObservations.json';
@@ -101,7 +102,7 @@ async function getZippedData(req: any) {
             while(tempEndDate.isBefore(endDate)) {
                 params.start_date = tempStartDate.format("YYYY-MM-DD");
                 params.end_date = tempEndDate.format("YYYY-MM-DD");
-                headerWrote = (await createCsv(getObservationsServiceCall(params.downloadType), params, 'observations' + requestTimestamp.toString() + '.csv', true, writeHeader))[1];
+                headerWrote = (await createCsv(getObservationsServiceCall(params.downloadType), params, 'individual_phenometrics_data' + requestTimestamp.toString() + '.csv', "observation", true, writeHeader))[1];
                 tempStartDate.add(1,"years");
                 tempEndDate.add(1,"years");
                 if(headerWrote)
@@ -109,26 +110,27 @@ async function getZippedData(req: any) {
             }
             params.start_date = tempStartDate.format("YYYY-MM-DD");
             params.end_date = endDate.format("YYYY-MM-DD");
-            csvFileNames.push((await createCsv(getObservationsServiceCall(params.downloadType), params, 'observations' + requestTimestamp.toString() + '.csv', true, writeHeader))[0]);
+            csvFileNames.push((await createCsv(getObservationsServiceCall(params.downloadType), params, 'site_phenometrics_data' + requestTimestamp.toString() + '.csv', "observation", true, writeHeader))[0]);
         }
         else
-            csvFileNames.push((await createCsv(getObservationsServiceCall(params.downloadType), params, 'observations' + requestTimestamp.toString() + '.csv', true, true))[0]);
+            csvFileNames.push((await createCsv(getObservationsServiceCall(params.downloadType), params, 'status_intensity_observation_data' + requestTimestamp.toString() + '.csv', "observation", true, true))[0]);
         if(params.ancillary_data) {
             if(params.ancillary_data.indexOf("Sites") != -1)
-                csvFileNames.push((await createCsv("stations/getStationDetails.json", {"site_id": convertSetToArray(sites)}, 'site_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
+                csvFileNames.push((await createCsv("stations/getStationDetails.json", { "ids": convertSetToArray(sites).toString(), 'no_live': true}, 'ancillary_site_data' + requestTimestamp.toString() + '.csv', "station", false, true))[0]);
             if(params.ancillary_data.indexOf("Individual Plants") != -1)
-                csvFileNames.push((await createCsv("individuals/getPlantDetails.json", {"individual_id": convertSetToArray(individuals)}, 'individual_plant_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
+                csvFileNames.push((await createCsv("individuals/getPlantDetails.json", {"individual_id": convertSetToArray(individuals)}, 'ancillary_individual_plant_data' + requestTimestamp.toString() + '.csv', "individual", false, true))[0]);
             if(params.ancillary_data.indexOf("Observers") != -1)
-                csvFileNames.push((await createCsv("person/getObserverDetails.json", {"person_id": convertSetToArray(observers)}, 'person_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-            if(params.ancillary_data.indexOf("Observation Details") != -1)
-                csvFileNames.push((await createCsv("observations/getObservationGroupDetails.json", {"observation_group_id": convertSetToArray(groups)}, 'observation_group_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-            if(params.ancillary_data.indexOf("Protocols") != -1) {
-                csvFileNames.push((await createCsv("phenophases/getSpeciesProtocolDetails.json", "", 'species_protocol_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                csvFileNames.push((await createCsv("phenophases/getProtocolDetails.json", "", 'protocol_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                csvFileNames.push((await createCsv("phenophases/getPhenophaseDetails.json", {"phenophase_id": convertSetToArray(phenophases)}, 'phenophase_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                csvFileNames.push((await createCsv("phenophases/getSecondaryPhenophaseDetails.json", "", 'species-specific_phenophase_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                csvFileNames.push((await createCsv("phenophases/getAbundanceDetails.json", "", 'intensity_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                csvFileNames.push((await createCsv("observations/getDatasetDetails.json", {"dataset_id": convertSetToArray(datasets)}, 'dataset_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
+                csvFileNames.push((await createCsv("person/getObserverDetails.json", {"person_id": convertSetToArray(observers)}, 'ancillary_person_data' + requestTimestamp.toString() + '.csv', "observer", false, true))[0]);
+            if(params.ancillary_data.indexOf("Site Visit") != -1)
+                csvFileNames.push((await createCsv("observations/getObservationGroupDetails.json", {"observation_group_id": convertSetToArray(groups)}, 'ancillary_site_visit_data' + requestTimestamp.toString() + '.csv', "obs_group", false, true))[0]);
+            if(params.ancillary_data.indexOf("Protocols (7 files)") != -1) {
+                csvFileNames.push((await createCsv("phenophases/getSpeciesProtocolDetails.json", "", 'ancillary_species_protocol_data' + requestTimestamp.toString() + '.csv', "species_protocol", false, true))[0]);
+                csvFileNames.push((await createCsv("phenophases/getProtocolDetails.json", "", 'ancillary_protocol_data' + requestTimestamp.toString() + '.csv',"protocol",  false, true))[0]);
+                csvFileNames.push((await createCsv("phenophases/getPhenophaseDetails.json", {"phenophase_id": convertSetToArray(phenophases)}, 'ancillary_phenophase_data' + requestTimestamp.toString() + '.csv', "phenophase", false, true))[0]);
+                csvFileNames.push((await createCsv("phenophases/getSecondaryPhenophaseDetails.json", "", 'ancillary_species-specific_info_data' + requestTimestamp.toString() + '.csv', "sspi", false, true))[0]);
+                csvFileNames.push((await createCsv("phenophases/getAbundanceDetails.json", "", 'ancillary_intensity_data' + requestTimestamp.toString() + '.csv', "intensity", false, true))[0]);
+                csvFileNames.push((await createCsv("observations/getDatasetDetails.json", {"dataset_id": convertSetToArray(datasets)}, 'ancillary_dataset_data' + requestTimestamp.toString() + '.csv', "dataset", false, true))[0]);
+                csvFileNames.push((await createCsv("phenophases/getPhenophaseDefinitionDetails.json", "", 'ancillary_phenophase_definition_data' + requestTimestamp.toString() + '.csv', "phenophase_definition", false, true))[0]);                
             }
         }
        

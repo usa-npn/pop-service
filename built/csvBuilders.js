@@ -43,7 +43,7 @@ function createSearchParametersCsv(params, requestTimestamp) {
     });
 }
 exports.createSearchParametersCsv = createSearchParametersCsv;
-function createCsv(serviceCall, params, csvFileName, observationsCsv, writeHeader) {
+function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv, writeHeader) {
     return new Promise((resolve, reject) => {
         try {
             console.log("Building csv: " + csvFileName);
@@ -87,8 +87,8 @@ function createCsv(serviceCall, params, csvFileName, observationsCsv, writeHeade
                     }
                     csv.stringify([chunk], { header: firstRow }, (err, data) => {
                         if (firstRow) {
-                            if (observationsCsv)
-                                data = headerMappings_1.renameHeaders(data);
+                            //              if (observationsCsv || sheetName == "dataset")
+                            data = headerMappings_1.renameHeaders(sheetName, data);
                             headerWrote = true;
                             firstRow = false;
                         }

@@ -43,7 +43,7 @@ export function createSearchParametersCsv(params: NpnPortalParams, requestTimest
   });
 }
 
-export function createCsv(serviceCall: string, params: any, csvFileName: string, observationsCsv: boolean, writeHeader: boolean) {
+export function createCsv(serviceCall: string, params: any, csvFileName: string, sheetName: string, observationsCsv: boolean, writeHeader: boolean) {
   return new Promise<[string, boolean]>((resolve, reject) => {
     try {
       console.log("Building csv: " + csvFileName);
@@ -92,17 +92,20 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
 
           csv.stringify([chunk], {header: firstRow}, (err:any, data:any) => {
             if (firstRow) {
-              if(observationsCsv)
-                data = renameHeaders(data);
+//              if (observationsCsv || sheetName == "dataset")
+              data = renameHeaders(sheetName, data);
               headerWrote = true;
               firstRow = false;
             }
+            
             fs.appendFileSync(csvPath, data);
             callback();
           });
         };
         // data.on('data', (dd: any) => console.log('hello' + dd));
+
         data.pipe(JSONStream.parse('*')).pipe(objectStream);
+
         data.on('close', () => {
           reject("The connection was closed before the response was sent!");
         });
