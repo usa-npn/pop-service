@@ -23,7 +23,7 @@ export function createSearchParametersCsv(params: NpnPortalParams, requestTimest
       }
     }
     // write the csv file and resolve promise with the created csv's filename
-    let searchParametersCsvFileName = 'search_parameters_' + requestTimestamp.toString() + '.csv';
+    let searchParametersCsvFileName = 'search_parameters' + requestTimestamp.toString() + '.csv';
     let searchParametersCsvPath = config.get('save_path') + searchParametersCsvFileName;
     csv.stringify(paramsArray, (err: any, output: any) => {
       fs.appendFile(searchParametersCsvPath, output, function(err: any) {

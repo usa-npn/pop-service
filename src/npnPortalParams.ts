@@ -71,5 +71,6 @@ export var paramNamesBeautified: ParamNamesBeautified = {
     additionalFieldDisplay: 'Output Fields:',
     qualityFlags: 'Quality Flags:',
     network: 'Partner Groups:',
-    integrated_datasets: 'Integrated Datasets:'
+    integrated_datasets: 'Integrated Datasets:',
+    stations: 'Stations:'
 };
