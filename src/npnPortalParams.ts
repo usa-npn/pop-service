@@ -21,6 +21,7 @@ export interface NpnPortalParams {
     integrated_datasets: string[];
     dataset_ids: string[];
     ancillary_data: string[];
+    station_id: string[];
     [s: string]: (string | number | string[]);
 }
 
@@ -72,5 +73,5 @@ export var paramNamesBeautified: ParamNamesBeautified = {
     qualityFlags: 'Quality Flags:',
     network: 'Partner Groups:',
     integrated_datasets: 'Integrated Datasets:',
-    stations: 'Stations:'
+    station_id: 'Stations:'
 };

@@ -43,6 +43,6 @@ exports.paramNamesBeautified = {
     qualityFlags: 'Quality Flags:',
     network: 'Partner Groups:',
     integrated_datasets: 'Integrated Datasets:',
-    stations: 'Stations:'
+    station_id: 'Stations:'
 };
 //# sourceMappingURL=npnPortalParams.js.map
