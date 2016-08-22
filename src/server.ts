@@ -13,13 +13,15 @@ var https = require('https');
 var fs = require('graceful-fs');
 var moment = require('moment');
 var crypto = require('crypto');
+var mysql = require('mysql');
 
-var mysql      = require('mysql');
-var connection = mysql.createConnection({
+var pool      =    mysql.createPool({
+    connectionLimit : 20,
     host     : config.get('mysql_host'),
     user     : config.get('mysql_user'),
     password : config.get('mysql_password'),
-    database : config.get('mysql_database')
+    database : config.get('mysql_database'),
+    debug    :  false
 });
 
 let app = express();
@@ -184,13 +186,21 @@ app.get("/pop/search", (req, res) => {
 
     console.log("get /dot/search");
     let hashedJson = req.query.searchId;
-    connection.query('SELECT JSON from Pop_Search WHERE Hash = ?', hashedJson, (err:any, result:any) => {
-        if (err) throw err;
-        if(result[0]) {
-            res.send(JSON.parse(result[0].JSON));
+    pool.getConnection((err:any, connection:any) => {
+        if (err) {
+            console.error(err);
+            res.send(null);
         }
         else {
-            res.send(null);
+            connection.query('SELECT JSON from Pop_Search WHERE Hash = ?', hashedJson, (err:any, result:any) => {
+                if (err) throw err;
+                if (result[0]) {
+                    res.send(JSON.parse(result[0].JSON));
+                }
+                else {
+                    res.send(null);
+                }
+            });
         }
     });
 });
@@ -200,27 +210,35 @@ app.post("/pop/search", (req, res) => {
     // CREATE TABLE usanpn2.Pop_Search (Search_ID INT(11) NOT NULL AUTO_INCREMENT, Hash TEXT, Json TEXT, Save_Count INT(11), PRIMARY KEY(Search_ID));
     let foundHash = false;
     let saveCount = 1;
-    let saveJson = JSON.stringify(req.body.searchJson); //"{test: 'sfsdsdgi', test2: 'sdfsgs'}";
+    let saveJson = JSON.stringify(req.body.searchJson);
     let hashedJson = crypto.createHash('md5').update(saveJson).digest('hex');
-    connection.query('SELECT * from Pop_Search WHERE Hash = ?', hashedJson, (err:any, result:any) => {
-        if (err) throw err;
-        if(result[0]) {
-            foundHash = true;
-            saveCount = result[0].Save_Count;
-        }
-        if(!foundHash) {
-            var popSearch = { Hash: hashedJson, Json: saveJson, Save_Count: saveCount };
-            connection.query('INSERT INTO Pop_Search SET ?', popSearch, (err:any, result:any) => {
-                if(err) throw err;
-                console.log('Last insert:', result);
-                res.send({saved_search_hash: hashedJson});
-            });
+    pool.getConnection((err:any, connection:any) => {
+        if (err) {
+            console.error(err);
+            res.send(null);
         }
         else {
-            connection.query('Update Pop_Search SET Save_count = ? WHERE Hash = ?', [saveCount+1, hashedJson], (err:any, result:any) => {
-                if(err) throw err;
-                console.log('Last insert:', result);
-                res.send({saved_search_hash: hashedJson});
+            connection.query('SELECT * from Pop_Search WHERE Hash = ?', hashedJson, (err:any, result:any) => {
+                if (err) throw err;
+                if (result[0]) {
+                    foundHash = true;
+                    saveCount = result[0].Save_Count;
+                }
+                if (!foundHash) {
+                    var popSearch = {Hash: hashedJson, Json: saveJson, Save_Count: saveCount};
+                    connection.query('INSERT INTO Pop_Search SET ?', popSearch, (err:any, result:any) => {
+                        if (err) throw err;
+                        console.log('Last insert:', result);
+                        res.send({saved_search_hash: hashedJson});
+                    });
+                }
+                else {
+                    connection.query('Update Pop_Search SET Save_count = ? WHERE Hash = ?', [saveCount + 1, hashedJson], (err:any, result:any) => {
+                        if (err) throw err;
+                        console.log('Last insert:', result);
+                        res.send({saved_search_hash: hashedJson});
+                    });
+                }
             });
         }
     });
@@ -241,5 +259,4 @@ else {
 
 server.listen(config.get('port'), () => {
     console.log("Server listening on port " + config.get("port"));
-    connection.connect();
 });
