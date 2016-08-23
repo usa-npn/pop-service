@@ -142,7 +142,7 @@ var sheetMappings = {
         "contact_phone": "Contact_Phone",
         "contact_address": "Contact_Address",
         "dataset_comments": "Dataset_Comments",
-        "data_documentation_url": "Dataset_Documentation_URL"
+        "dataset_documentation_url": "Dataset_Documentation_URL"
     },
     "observer": {
         "person_id": "Person_ID",
