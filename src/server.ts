@@ -75,11 +75,11 @@ function convertSetToArray(set: Set<any>) {
 
 
 function getObservationsServiceCall(reportType: string): string {
-    if (reportType === 'Raw')
+    if (reportType === 'Status and Intensity')
         return 'observations/getObservations.json';
-    if (reportType === 'Individual-Level Summarized')
+    if (reportType === 'Individual Phenometrics')
         return 'observations/getSummarizedData.json';
-    if (reportType === 'Site-Level Summarized')
+    if (reportType === 'Site Phenometrics')
         return 'observations/getSiteLevelData.json';
 }
 
@@ -100,7 +100,7 @@ async function getZippedData(req: any) {
         let csvFileNames: string[] = [];
         csvFileNames.push(await createSearchParametersCsv(params, requestTimestamp));
 
-        if(params.downloadType != 'Raw') {
+        if(params.downloadType != 'Status and Intensity') {
             // for summarized data reports we need to chunk our requests in yearly intervals
             let startDate:Moment = moment(params.start_date, "YYYY-MM-DD");
             let endDate:Moment = moment(params.end_date, "YYYY-MM-DD");
@@ -110,7 +110,7 @@ async function getZippedData(req: any) {
             let headerWrote: boolean = false;
             let sheetName: string;
             
-            if(params.downloadType == "Individual-Level Summarized"){
+            if(params.downloadType == "Individual Phenometrics"){
                 sheetName = "individual_phenometrics_data"
             }else{
                 sheetName = "site_phenometrics_data";

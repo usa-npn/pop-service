@@ -71,11 +71,11 @@ function convertSetToArray(set) {
     return array;
 }
 function getObservationsServiceCall(reportType) {
-    if (reportType === 'Raw')
+    if (reportType === 'Status and Intensity')
         return 'observations/getObservations.json';
-    if (reportType === 'Individual-Level Summarized')
+    if (reportType === 'Individual Phenometrics')
         return 'observations/getSummarizedData.json';
-    if (reportType === 'Site-Level Summarized')
+    if (reportType === 'Site Phenometrics')
         return 'observations/getSiteLevelData.json';
 }
 function getZippedData(req) {
@@ -92,7 +92,7 @@ function getZippedData(req) {
             let datasets = new Set();
             let csvFileNames = [];
             csvFileNames.push(yield csvBuilders_1.createSearchParametersCsv(params, requestTimestamp));
-            if (params.downloadType != 'Raw') {
+            if (params.downloadType != 'Status and Intensity') {
                 // for summarized data reports we need to chunk our requests in yearly intervals
                 let startDate = moment(params.start_date, "YYYY-MM-DD");
                 let endDate = moment(params.end_date, "YYYY-MM-DD");
@@ -101,7 +101,7 @@ function getZippedData(req) {
                 let writeHeader = true;
                 let headerWrote = false;
                 let sheetName;
-                if (params.downloadType == "Individual-Level Summarized") {
+                if (params.downloadType == "Individual Phenometrics") {
                     sheetName = "individual_phenometrics_data";
                 }
                 else {
