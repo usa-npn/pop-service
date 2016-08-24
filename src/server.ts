@@ -141,7 +141,7 @@ async function getZippedData(req: any) {
                 csvFileNames.push((await createCsv("individuals/getPlantDetails.json", {"individual_id": convertSetToArray(individuals)}, 'ancillary_individual_plant_data' + requestTimestamp.toString() + '.csv', "individual", false, true, sites, individuals, observers, groups, phenophases, datasets))[0]);
             if(params.ancillary_data.indexOf("Observers") != -1)
                 csvFileNames.push((await createCsv("person/getObserverDetails.json", {"person_id": convertSetToArray(observers)}, 'ancillary_person_data' + requestTimestamp.toString() + '.csv', "observer", false, true, sites, individuals, observers, groups, phenophases, datasets))[0]);
-            if(params.ancillary_data.indexOf("Site Visit") != -1)
+            if(params.ancillary_data.indexOf("Site Visit Details") != -1)
                 csvFileNames.push((await createCsv("observations/getObservationGroupDetails.json", {"observation_group_id": convertSetToArray(groups)}, 'ancillary_site_visit_data' + requestTimestamp.toString() + '.csv', "obs_group", false, true, sites, individuals, observers, groups, phenophases, datasets))[0]);
             if(params.ancillary_data.indexOf("Protocols (7 files)") != -1) {
                 csvFileNames.push((await createCsv("phenophases/getSpeciesProtocolDetails.json", {}, 'ancillary_species_protocol_data' + requestTimestamp.toString() + '.csv', "species_protocol", false, true, sites, individuals, observers, groups, phenophases, datasets))[0]);
