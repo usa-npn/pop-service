@@ -37,7 +37,7 @@ function createSearchParametersCsv(params, requestTimestamp) {
     });
 }
 exports.createSearchParametersCsv = createSearchParametersCsv;
-function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv, writeHeader, sites, individuals, observers, groups, phenophases, datasets) {
+function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv, writeHeader, sites, individuals, observers, groups) {
     return new Promise((resolve, reject) => {
         try {
             console.log("Building csv: " + csvFileName);
@@ -64,7 +64,7 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                 let objectStream = new stream.Writable({ highWaterMark: 1, objectMode: true });
                 objectStream._write = (chunk, encoding, callback) => {
                     if (observationsCsv) {
-                        // save some info to produce other csv files
+                        // save some info to help produce (filter results) in other generated csv files
                         sites.add(chunk.site_id);
                         individuals.add(chunk.individual_id);
                         let observedByPersonIds = chunk.observedby_person_id;
@@ -78,12 +78,9 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                                 observers.add(observedByPersonIds);
                         }
                         groups.add(chunk.observation_group_id);
-                        phenophases.add(chunk.phenophase_id);
-                        datasets.add(chunk.dataset_id);
                     }
                     csv.stringify([chunk], { header: firstRow }, (err, data) => {
                         if (firstRow) {
-                            //              if (observationsCsv || sheetName == "dataset")
                             data = headerMappings_1.renameHeaders(sheetName, data);
                             headerWrote = true;
                             firstRow = false;

@@ -39,7 +39,7 @@ export function createSearchParametersCsv(params: NpnPortalParams, requestTimest
 
 
 export function createCsv(serviceCall: string, params: any, csvFileName: string, sheetName: string, observationsCsv: boolean, writeHeader: boolean, 
-                          sites: Set<number>, individuals: Set<number>, observers: Set<number>, groups: Set<number>, phenophases: Set<number>, datasets: Set<number>) {
+                          sites: Set<number>, individuals: Set<number>, observers: Set<number>, groups: Set<number>) {
 
   return new Promise<[string, boolean]>((resolve, reject) => {
     try {
@@ -72,7 +72,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         objectStream._write = (chunk:any, encoding:string, callback:Function) => {
 
           if (observationsCsv) {
-            // save some info to produce other csv files
+            // save some info to help produce (filter results) in other generated csv files
             sites.add(chunk.site_id);
             individuals.add(chunk.individual_id);
             let observedByPersonIds = chunk.observedby_person_id;
@@ -86,13 +86,10 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
                 observers.add(observedByPersonIds);
             }
             groups.add(chunk.observation_group_id);
-            phenophases.add(chunk.phenophase_id);
-            datasets.add(chunk.dataset_id);
           }
 
           csv.stringify([chunk], {header: firstRow}, (err:any, data:any) => {
             if (firstRow) {
-//              if (observationsCsv || sheetName == "dataset")
               data = renameHeaders(sheetName, data);
               headerWrote = true;
               firstRow = false;
