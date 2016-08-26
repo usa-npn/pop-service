@@ -25,13 +25,13 @@ export function createZip(downloadType: string, filesToZip: string[], requestTim
             let fileNameWithoutTimestamp = fileName.replace(/[0-9]/g, "");
             archive.append(fs.createReadStream(config.get('save_path') + fileName), { name: fileNameWithoutTimestamp });
         }
-        if(downloadType === 'Raw' && fs.existsSync(config.get('metadata_path') + 'status_intensity_datafield_descriptions.xlsx')) {
+        if(downloadType === 'Status and Intensity' && fs.existsSync(config.get('metadata_path') + 'status_intensity_datafield_descriptions.xlsx')) {
             archive.append(fs.createReadStream(config.get('metadata_path') + 'status_intensity_datafield_descriptions.xlsx'), { name: 'status_intensity_datafield_descriptions.xlsx' });
         }
-        else if(downloadType === 'Site-Level Summarized' && fs.existsSync(config.get('metadata_path') + 'site_phenometrics_datafield_descriptions.xlsx')) {
+        else if(downloadType === 'Site Phenometrics' && fs.existsSync(config.get('metadata_path') + 'site_phenometrics_datafield_descriptions.xlsx')) {
             archive.append(fs.createReadStream(config.get('metadata_path') + 'site_phenometrics_datafield_descriptions.xlsx'), { name: 'site_phenometrics_datafield_descriptions.xlsx' });
         }
-        else if(downloadType === 'Individual-Level Summarized' && fs.existsSync(config.get('metadata_path') + 'individual_phenometrics_datafield_descriptions.xlsx')) {
+        else if(downloadType === 'Individual Phenometrics' && fs.existsSync(config.get('metadata_path') + 'individual_phenometrics_datafield_descriptions.xlsx')) {
             archive.append(fs.createReadStream(config.get('metadata_path') + 'individual_phenometrics_datafield_descriptions.xlsx'), { name: 'individual_phenometrics_datafield_descriptions.xlsx' });
         }
         
