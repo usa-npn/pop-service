@@ -15,7 +15,11 @@ config structure:
   "protocol": "http or https",
   "ssl_cert": "dir to ssl cert",
   "ssl_key": "dir to ssl key",
-  "port": portNumber
+  "port": portNumber the nodejs server will listen on,
+  "mysql_host": ,
+  "mysql_user": ,
+  "mysql_password": ,
+  "mysql_database":
 }
 
 For more details see
