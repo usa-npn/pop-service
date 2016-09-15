@@ -22,6 +22,7 @@ var fs = require('graceful-fs');
 var moment = require('moment');
 var crypto = require('crypto');
 var mysql = require('mysql');
+var util = require('util');
 var pool = mysql.createPool({
     connectionLimit: 20,
     host: config.get('mysql_host'),
@@ -140,11 +141,32 @@ function getZippedData(req) {
                 }
             }
             let zipFileName = yield zipBuilder_1.createZip(params.downloadType, csvFileNames, requestTimestamp);
+            // remove csv files that were just zipped
             for (var csvFile of csvFileNames) {
                 fs.unlink(config.get('save_path') + csvFile, (err) => {
                     if (err)
                         throw err;
                 });
+            }
+            // remove old zip files
+            let filesInDownloadsDirectory = fs.readdirSync(config.get('save_path'));
+            for (var i in filesInDownloadsDirectory) {
+                let filePath = config.get('save_path') + filesInDownloadsDirectory[i];
+                if (path.extname(filePath) === '.zip') {
+                    //console.log('looking at: ' + filePath);
+                    let stats = fs.statSync(filePath);
+                    let mtime = new Date(util.inspect(stats.mtime));
+                    //console.log('last modified time: ' + mtime);
+                    let daysOld = moment(requestTimestamp).diff(moment(mtime), 'days');
+                    //console.log('file is ' + daysOld + ' days old');
+                    if (daysOld > 1) {
+                        //console.log('file is going to be deleted');
+                        fs.unlink(filePath, (err) => {
+                            if (err)
+                                throw err;
+                        });
+                    }
+                }
             }
             log.info("Sending " + zipFileName + " to the client");
             return { download_path: config.get('server_path') + zipFileName };
