@@ -266,6 +266,12 @@ app.post("/pop/search", (req, res) => {
     });
 });
 
+app.get("/pop/fgdc", (req, res) => {
+    console.log("get /dot/fgdc");
+    var file = config.get('metadata_path') + 'USA-NPN_Plant_Animal_2009-10_Phenology_Data.xml';
+    res.download(file, 'fgdc_metadata.xml'); // Set disposition and send it.
+});
+
 if(config.get('protocol') === 'https' ) {
     var certificate = fs.readFileSync(config.get('ssl_cert'));
     var privateKey = fs.readFileSync(config.get('ssl_key'));
