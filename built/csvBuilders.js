@@ -89,8 +89,17 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                         callback();
                     });
                 };
-                // data.on('data', (dd: any) => console.log('hello' + dd));
-                data.pipe(JSONStream.parse('*')).pipe(objectStream);
+                //save the last chunk so that we can log it in case of parsing error
+                let lastRetrievedChunk = '';
+                data.on('data', (dd) => {
+                    lastRetrievedChunk = dd.toString();
+                    //console.log('hello' + dd);
+                });
+                let jsonParser = JSONStream.parse('*');
+                jsonParser.on('error', (err) => {
+                    reject(err.stack + ' lastchunk = ' + lastRetrievedChunk);
+                });
+                data.pipe(jsonParser).pipe(objectStream);
                 data.on('close', () => {
                     reject("The connection was closed before the response was sent!");
                 });
