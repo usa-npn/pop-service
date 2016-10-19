@@ -255,8 +255,15 @@ app.post("/pop/search", (req, res) => {
 });
 app.get("/pop/fgdc", (req, res) => {
     console.log("get /dot/fgdc");
-    var file = config.get('metadata_path') + 'USA-NPN_Plant_Animal_2009-10_Phenology_Data.xml';
-    res.download(file, 'fgdc_metadata.xml'); // Set disposition and send it.
+    let filePath = config.get('metadata_path') + "USA-NPN_Phenology_observation_data.xml";
+    let file = fs.createWriteStream(filePath);
+    let gitUrl = "https://raw.githubusercontent.com/usa-npn/metadata/master/USA-NPN_Phenology_observation_data.xml";
+    https.get(gitUrl, (gitResponse) => {
+        gitResponse.pipe(file);
+        gitResponse.on('end', () => {
+            res.download(filePath, 'USA-NPN_Phenology_observation_data.xml'); // Set disposition and send it.
+        });
+    });
 });
 if (config.get('protocol') === 'https') {
     var certificate = fs.readFileSync(config.get('ssl_cert'));
