@@ -274,7 +274,7 @@ app.get("/pop/fgdc", (req, res) => {
     let gitUrl = "https://raw.githubusercontent.com/usa-npn/metadata/master/USA-NPN_Phenology_observation_data.xml";
     https.get(gitUrl, (gitResponse: any) => {
         gitResponse.pipe(file);
-        gitResponse.on('end', () => {
+        file.on('finish', () => {
             res.download(filePath, 'USA-NPN_Phenology_observation_data.xml'); // Set disposition and send it.
         });
     });
