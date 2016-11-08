@@ -223,6 +223,7 @@ app.get("/pop/search", (req, res) => {
                 else {
                     res.send(null);
                 }
+                connection.release();
             });
         }
     });
@@ -239,6 +240,7 @@ app.post("/pop/search", (req, res) => {
         if (err) {
             console.error(err);
             res.send(null);
+            connection.release();
         }
         else {
             connection.query('SELECT * from Pop_Search WHERE Hash = ?', hashedJson, (err:any, result:any) => {
@@ -262,6 +264,7 @@ app.post("/pop/search", (req, res) => {
                         res.send({saved_search_hash: hashedJson});
                     });
                 }
+                connection.release();
             });
         }
     });
