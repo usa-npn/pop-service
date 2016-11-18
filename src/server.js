@@ -11,22 +11,27 @@ var csvBuilders_1 = require("./csvBuilders");
 var zipBuilder_1 = require("./zipBuilder");
 var npnPortalParams_1 = require("./npnPortalParams");
 var express = require("express");
-var morgan = require('morgan');
+var moment = require("moment");
 var bunyan = require('bunyan');
-var path = require('path');
-var bodyParser = require('body-parser');
-var config = require('config');
-var http = require('http');
-var https = require('https');
+var morgan = require('morgan');
 var fs = require('graceful-fs');
-var moment = require('moment');
+var bodyParser = require('body-parser');
 var crypto = require('crypto');
 var mysql = require('mysql');
-var connection = mysql.createConnection({
+var config = require('config');
+var util = require('util');
+var path = require('path');
+// import * as http from 'http';  //not using because won't allow server.setTimeout(0);
+// import * as https from 'https';
+var http = require('http');
+var https = require('https');
+var pool = mysql.createPool({
+    connectionLimit: 20,
     host: config.get('mysql_host'),
     user: config.get('mysql_user'),
     password: config.get('mysql_password'),
-    database: config.get('mysql_database')
+    database: config.get('mysql_database'),
+    debug: false
 });
 var app = express();
 // allows us to consume json from post requests
@@ -69,44 +74,12 @@ function convertSetToArray(set) {
     return array;
 }
 function getObservationsServiceCall(reportType) {
-    if (reportType === 'Raw')
+    if (reportType === 'Status and Intensity')
         return 'observations/getObservations.json';
-    if (reportType === 'Individual-Level Summarized')
+    if (reportType === 'Individual Phenometrics')
         return 'observations/getSummarizedData.json';
-    if (reportType === 'Site-Level Summarized')
+    if (reportType === 'Site Phenometrics')
         return 'observations/getSiteLevelData.json';
-}
-function saveSearch(req) {
-    // CREATE TABLE usanpn2.Pop_Search (Search_ID INT(11) NOT NULL AUTO_INCREMENT, Hash TEXT, Json TEXT, Save_Count INT(11), PRIMARY KEY(Search_ID));
-    var foundHash = false;
-    var saveCount = 1;
-    var saveJson = req.body; //"{test: 'sfsdsdgi', test2: 'sdfsgs'}";
-    var hashedJson = crypto.createHash('md5').update(saveJson).digest('hex');
-    connection.query('SELECT * from Pop_Search WHERE Hash = ?', hashedJson, function (err, result) {
-        if (err)
-            throw err;
-        if (result[0]) {
-            foundHash = true;
-            saveCount = result[0].Save_Count;
-        }
-        if (!foundHash) {
-            var popSearch = { Hash: hashedJson, Json: saveJson, Save_Count: saveCount };
-            connection.query('INSERT INTO Pop_Search SET ?', popSearch, function (err, res) {
-                if (err)
-                    throw err;
-                console.log('Last insert:', res);
-                return { saved_search_hash: hashedJson };
-            });
-        }
-        else {
-            connection.query('Update Pop_Search SET Save_count = ? WHERE Hash = ?', [saveCount + 1, hashedJson], function (err, res) {
-                if (err)
-                    throw err;
-                console.log('Last insert:', res);
-                return { saved_search_hash: hashedJson };
-            });
-        }
-    });
 }
 function getZippedData(req) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -114,9 +87,13 @@ function getZippedData(req) {
             var requestTimestamp = Date.now();
             var params = npnPortalParams_1.getNpnPortalParams(req);
             log.info(params, "Data Request made with these params");
+            var sites = new Set();
+            var individuals = new Set();
+            var observers = new Set();
+            var groups = new Set();
             var csvFileNames = [];
             csvFileNames.push(yield csvBuilders_1.createSearchParametersCsv(params, requestTimestamp));
-            if (params.downloadType != 'Raw') {
+            if (params.downloadType != 'Status and Intensity') {
                 // for summarized data reports we need to chunk our requests in yearly intervals
                 var startDate = moment(params.start_date, "YYYY-MM-DD");
                 var endDate = moment(params.end_date, "YYYY-MM-DD");
@@ -124,10 +101,17 @@ function getZippedData(req) {
                 var tempEndDate = moment(startDate).add(1, "years");
                 var writeHeader = true;
                 var headerWrote = false;
+                var sheetName = void 0;
+                if (params.downloadType == "Individual Phenometrics") {
+                    sheetName = "individual_phenometrics_data";
+                }
+                else {
+                    sheetName = "site_phenometrics_data";
+                }
                 while (tempEndDate.isBefore(endDate)) {
                     params.start_date = tempStartDate.format("YYYY-MM-DD");
                     params.end_date = tempEndDate.format("YYYY-MM-DD");
-                    headerWrote = (yield csvBuilders_1.createCsv(getObservationsServiceCall(params.downloadType), params, 'observations' + requestTimestamp.toString() + '.csv', true, writeHeader))[1];
+                    headerWrote = (yield csvBuilders_1.createCsv(getObservationsServiceCall(params.downloadType), params, sheetName + requestTimestamp.toString() + '.csv', "observation", true, writeHeader, sites, individuals, observers, groups))[1];
                     tempStartDate.add(1, "years");
                     tempEndDate.add(1, "years");
                     if (headerWrote)
@@ -135,35 +119,57 @@ function getZippedData(req) {
                 }
                 params.start_date = tempStartDate.format("YYYY-MM-DD");
                 params.end_date = endDate.format("YYYY-MM-DD");
-                csvFileNames.push((yield csvBuilders_1.createCsv(getObservationsServiceCall(params.downloadType), params, 'observations' + requestTimestamp.toString() + '.csv', true, writeHeader))[0]);
+                csvFileNames.push((yield csvBuilders_1.createCsv(getObservationsServiceCall(params.downloadType), params, sheetName + requestTimestamp.toString() + '.csv', "observation", true, writeHeader, sites, individuals, observers, groups))[0]);
             }
             else
-                csvFileNames.push((yield csvBuilders_1.createCsv(getObservationsServiceCall(params.downloadType), params, 'observations' + requestTimestamp.toString() + '.csv', true, true))[0]);
+                csvFileNames.push((yield csvBuilders_1.createCsv(getObservationsServiceCall(params.downloadType), params, 'status_intensity_observation_data' + requestTimestamp.toString() + '.csv', "observation", true, true, sites, individuals, observers, groups))[0]);
             if (params.ancillary_data) {
                 if (params.ancillary_data.indexOf("Sites") != -1)
-                    csvFileNames.push((yield csvBuilders_1.createCsv("stations/getStationDetails.json", { "site_id": convertSetToArray(csvBuilders_1.sites) }, 'site_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("stations/getStationDetails.json", { "ids": convertSetToArray(sites).toString(), 'no_live': true }, 'ancillary_site_data' + requestTimestamp.toString() + '.csv', "station", false, true, sites, individuals, observers, groups))[0]);
                 if (params.ancillary_data.indexOf("Individual Plants") != -1)
-                    csvFileNames.push((yield csvBuilders_1.createCsv("individuals/getPlantDetails.json", { "individual_id": convertSetToArray(csvBuilders_1.individuals) }, 'individual_plant_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("individuals/getPlantDetails.json", { "individual_id": convertSetToArray(individuals) }, 'ancillary_individual_plant_data' + requestTimestamp.toString() + '.csv', "individual", false, true, sites, individuals, observers, groups))[0]);
                 if (params.ancillary_data.indexOf("Observers") != -1)
-                    csvFileNames.push((yield csvBuilders_1.createCsv("person/getObserverDetails.json", { "person_id": convertSetToArray(csvBuilders_1.observers) }, 'person_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                if (params.ancillary_data.indexOf("Observation Details") != -1)
-                    csvFileNames.push((yield csvBuilders_1.createCsv("observations/getObservationGroupDetails.json", { "observation_group_id": convertSetToArray(csvBuilders_1.groups) }, 'observation_group_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                if (params.ancillary_data.indexOf("Protocols") != -1) {
-                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getSpeciesProtocolDetails.json", "", 'species_protocol_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getProtocolDetails.json", "", 'protocol_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getPhenophaseDetails.json", { "phenophase_id": convertSetToArray(csvBuilders_1.phenophases) }, 'phenophase_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getSecondaryPhenophaseDetails.json", "", 'species-specific_phenophase_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getAbundanceDetails.json", "", 'intensity_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
-                    csvFileNames.push((yield csvBuilders_1.createCsv("observations/getDatasetDetails.json", { "dataset_id": convertSetToArray(csvBuilders_1.datasets) }, 'dataset_data' + requestTimestamp.toString() + '.csv', false, true))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("person/getObserverDetails.json", { "person_id": convertSetToArray(observers) }, 'ancillary_person_data' + requestTimestamp.toString() + '.csv', "observer", false, true, sites, individuals, observers, groups))[0]);
+                if (params.ancillary_data.indexOf("Site Visit Details") != -1)
+                    csvFileNames.push((yield csvBuilders_1.createCsv("observations/getObservationGroupDetails.json", { "observation_group_id": convertSetToArray(groups) }, 'ancillary_site_visit_data' + requestTimestamp.toString() + '.csv', "obs_group", false, true, sites, individuals, observers, groups))[0]);
+                if (params.ancillary_data.indexOf("Protocols (7 files)") != -1) {
+                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getSpeciesProtocolDetails.json", {}, 'ancillary_species_protocol_data' + requestTimestamp.toString() + '.csv', "species_protocol", false, true, sites, individuals, observers, groups))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getProtocolDetails.json", {}, 'ancillary_protocol_data' + requestTimestamp.toString() + '.csv', "protocol", false, true, sites, individuals, observers, groups))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getPhenophaseDetails.json", {}, 'ancillary_phenophase_data' + requestTimestamp.toString() + '.csv', "phenophase", false, true, sites, individuals, observers, groups))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getSecondaryPhenophaseDetails.json", {}, 'ancillary_species-specific_info_data' + requestTimestamp.toString() + '.csv', "sspi", false, true, sites, individuals, observers, groups))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getAbundanceDetails.json", {}, 'ancillary_intensity_data' + requestTimestamp.toString() + '.csv', "intensity", false, true, sites, individuals, observers, groups))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("observations/getDatasetDetails.json", {}, 'ancillary_dataset_data' + requestTimestamp.toString() + '.csv', "dataset", false, true, sites, individuals, observers, groups))[0]);
+                    csvFileNames.push((yield csvBuilders_1.createCsv("phenophases/getPhenophaseDefinitionDetails.json", {}, 'ancillary_phenophase_definition_data' + requestTimestamp.toString() + '.csv', "phenophase_definition", false, true, sites, individuals, observers, groups))[0]);
                 }
             }
             var zipFileName = yield zipBuilder_1.createZip(params.downloadType, csvFileNames, requestTimestamp);
+            // remove csv files that were just zipped
             for (var _i = 0, csvFileNames_1 = csvFileNames; _i < csvFileNames_1.length; _i++) {
                 var csvFile = csvFileNames_1[_i];
                 fs.unlink(config.get('save_path') + csvFile, function (err) {
                     if (err)
                         throw err;
                 });
+            }
+            // remove old zip files
+            var filesInDownloadsDirectory = fs.readdirSync(config.get('save_path'));
+            for (var i in filesInDownloadsDirectory) {
+                var filePath = config.get('save_path') + filesInDownloadsDirectory[i];
+                if (path.extname(filePath) === '.zip') {
+                    //console.log('looking at: ' + filePath);
+                    var stats = fs.statSync(filePath);
+                    var mtime = new Date(util.inspect(stats.mtime));
+                    //console.log('last modified time: ' + mtime);
+                    var daysOld = moment(requestTimestamp).diff(moment(mtime), 'days');
+                    //console.log('file is ' + daysOld + ' days old');
+                    if (daysOld > 1) {
+                        //console.log('file is going to be deleted');
+                        fs.unlink(filePath, function (err) {
+                            if (err)
+                                throw err;
+                        });
+                    }
+                }
             }
             log.info("Sending " + zipFileName + " to the client");
             return { download_path: config.get('server_path') + zipFileName };
@@ -175,7 +181,7 @@ function getZippedData(req) {
         }
     });
 }
-app.post("/dot/download", function (req, res) {
+app.post("/pop/download", function (req, res) {
     console.log("in /dot/download");
     getZippedData(req)
         .then(function (zipFile) {
@@ -187,51 +193,82 @@ app.post("/dot/download", function (req, res) {
         res.send({ download_path: 'error' });
     });
 });
-app.get("/dot/search", function (req, res) {
+app.get("/pop/search", function (req, res) {
     console.log("get /dot/search");
     var hashedJson = req.query.searchId;
-    connection.query('SELECT JSON from Pop_Search WHERE Hash = ?', hashedJson, function (err, result) {
-        if (err)
-            throw err;
-        if (result[0]) {
-            res.send(JSON.parse(result[0].JSON));
+    pool.getConnection(function (err, connection) {
+        if (err) {
+            console.error(err);
+            res.send(null);
         }
         else {
-            res.send(null);
+            connection.query('SELECT JSON from Pop_Search WHERE Hash = ?', hashedJson, function (err, result) {
+                if (err)
+                    throw err;
+                if (result[0]) {
+                    res.send(JSON.parse(result[0].JSON));
+                }
+                else {
+                    res.send(null);
+                }
+                connection.release();
+            });
         }
     });
 });
-app.post("/dot/search", function (req, res) {
+app.post("/pop/search", function (req, res) {
     console.log("post /dot/search");
     // CREATE TABLE usanpn2.Pop_Search (Search_ID INT(11) NOT NULL AUTO_INCREMENT, Hash TEXT, Json TEXT, Save_Count INT(11), PRIMARY KEY(Search_ID));
     var foundHash = false;
     var saveCount = 1;
-    var saveJson = JSON.stringify(req.body.searchJson); //"{test: 'sfsdsdgi', test2: 'sdfsgs'}";
+    var saveJson = JSON.stringify(req.body.searchJson);
     var hashedJson = crypto.createHash('md5').update(saveJson).digest('hex');
-    connection.query('SELECT * from Pop_Search WHERE Hash = ?', hashedJson, function (err, result) {
-        if (err)
-            throw err;
-        if (result[0]) {
-            foundHash = true;
-            saveCount = result[0].Save_Count;
-        }
-        if (!foundHash) {
-            var popSearch = { Hash: hashedJson, Json: saveJson, Save_Count: saveCount };
-            connection.query('INSERT INTO Pop_Search SET ?', popSearch, function (err, result) {
-                if (err)
-                    throw err;
-                console.log('Last insert:', result);
-                res.send({ saved_search_hash: hashedJson });
-            });
+    pool.getConnection(function (err, connection) {
+        if (err) {
+            console.error(err);
+            res.send(null);
+            connection.release();
         }
         else {
-            connection.query('Update Pop_Search SET Save_count = ? WHERE Hash = ?', [saveCount + 1, hashedJson], function (err, result) {
+            connection.query('SELECT * from Pop_Search WHERE Hash = ?', hashedJson, function (err, result) {
                 if (err)
                     throw err;
-                console.log('Last insert:', result);
-                res.send({ saved_search_hash: hashedJson });
+                if (result[0]) {
+                    foundHash = true;
+                    saveCount = result[0].Save_Count;
+                }
+                if (!foundHash) {
+                    var popSearch = { Hash: hashedJson, Json: saveJson, Save_Count: saveCount };
+                    connection.query('INSERT INTO Pop_Search SET ?', popSearch, function (err, result) {
+                        if (err)
+                            throw err;
+                        console.log('Last insert:', result);
+                        res.send({ saved_search_hash: hashedJson });
+                    });
+                }
+                else {
+                    connection.query('Update Pop_Search SET Save_count = ? WHERE Hash = ?', [saveCount + 1, hashedJson], function (err, result) {
+                        if (err)
+                            throw err;
+                        console.log('Last insert:', result);
+                        res.send({ saved_search_hash: hashedJson });
+                    });
+                }
+                connection.release();
             });
         }
+    });
+});
+app.get("/pop/fgdc", function (req, res) {
+    console.log("get /dot/fgdc");
+    var filePath = config.get('metadata_path') + "USA-NPN_Phenology_observation_data.xml";
+    var file = fs.createWriteStream(filePath);
+    var gitUrl = "https://raw.githubusercontent.com/usa-npn/metadata/master/USA-NPN_Phenology_observation_data.xml";
+    https.get(gitUrl, function (gitResponse) {
+        gitResponse.pipe(file);
+        file.on('finish', function () {
+            res.download(filePath, 'USA-NPN_Phenology_observation_data.xml'); // Set disposition and send it.
+        });
     });
 });
 if (config.get('protocol') === 'https') {
@@ -248,5 +285,4 @@ else {
 }
 server.listen(config.get('port'), function () {
     console.log("Server listening on port " + config.get("port"));
-    connection.connect();
 });

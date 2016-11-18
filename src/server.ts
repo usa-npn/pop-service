@@ -2,27 +2,28 @@ import { createSearchParametersCsv, createCsv } from "./csvBuilders";
 import { createZip } from "./zipBuilder";
 import { getNpnPortalParams } from "./npnPortalParams";
 import * as express from "express";
-import Moment = moment.Moment;
-var morgan = require('morgan');
-var bunyan = require('bunyan');
-var path = require('path');
-var bodyParser = require('body-parser');
-var config = require('config');
-var http = require('http');
-var https = require('https');
-var fs = require('graceful-fs');
-var moment = require('moment');
-var crypto = require('crypto');
-var mysql = require('mysql');
-var util = require('util');
+import * as moment from "moment";
+import * as bunyan from 'bunyan';
+import * as morgan from 'morgan';
+import * as fs from 'graceful-fs';
+import * as bodyParser from 'body-parser';
+import * as crypto from 'crypto';
+import * as mysql from 'mysql';
+import * as config from 'config';
+import * as util from 'util';
+import * as path from 'path';
+// import * as http from 'http';  //not using because won't allow server.setTimeout(0);
+// import * as https from 'https';
+let http = require('http');
+let https = require('https');
 
 
-var pool      =    mysql.createPool({
+let pool      =    mysql.createPool({
     connectionLimit : 20,
-    host     : config.get('mysql_host'),
-    user     : config.get('mysql_user'),
-    password : config.get('mysql_password'),
-    database : config.get('mysql_database'),
+    host     : config.get('mysql_host') as string,
+    user     : config.get('mysql_user') as string,
+    password : config.get('mysql_password') as string,
+    database : config.get('mysql_database') as string,
     debug    :  false
 });
 
@@ -32,10 +33,10 @@ let app = express();
 app.use(bodyParser.json());
 
 // create a write stream (in append mode) and set up a log to record requests
-var accessLogStream = fs.createWriteStream(path.join(config.get("logs_path"), 'access.log'), {flags: 'a'});
+let accessLogStream = fs.createWriteStream(path.join(config.get("logs_path"), 'access.log'), {flags: 'a'});
 app.use(morgan('combined', {stream: accessLogStream}));
 
-var log = bunyan.createLogger({
+let log = bunyan.createLogger({
     name: 'dot_service',
     streams: [
         {
@@ -102,10 +103,10 @@ async function getZippedData(req: any) {
 
         if(params.downloadType != 'Status and Intensity') {
             // for summarized data reports we need to chunk our requests in yearly intervals
-            let startDate:Moment = moment(params.start_date, "YYYY-MM-DD");
-            let endDate:Moment = moment(params.end_date, "YYYY-MM-DD");
-            let tempStartDate:Moment = moment(startDate);
-            let tempEndDate:Moment = moment(startDate).add(1,"years");
+            let startDate = moment(params.start_date, "YYYY-MM-DD");
+            let endDate = moment(params.end_date, "YYYY-MM-DD");
+            let tempStartDate = moment(startDate);
+            let tempEndDate = moment(startDate).add(1,"years");
             let writeHeader: boolean = true;
             let headerWrote: boolean = false;
             let sheetName: string;
@@ -164,7 +165,7 @@ async function getZippedData(req: any) {
         }
         
         // remove old zip files
-        let filesInDownloadsDirectory = fs.readdirSync(config.get('save_path'));
+        let filesInDownloadsDirectory = fs.readdirSync(config.get('save_path') as string);
         for (var i in filesInDownloadsDirectory){
             let filePath = config.get('save_path') + filesInDownloadsDirectory[i];
             if(path.extname(filePath) === '.zip') {
@@ -250,7 +251,7 @@ app.post("/pop/search", (req, res) => {
                     saveCount = result[0].Save_Count;
                 }
                 if (!foundHash) {
-                    var popSearch = {Hash: hashedJson, Json: saveJson, Save_Count: saveCount};
+                    let popSearch = {Hash: hashedJson, Json: saveJson, Save_Count: saveCount};
                     connection.query('INSERT INTO Pop_Search SET ?', popSearch, (err:any, result:any) => {
                         if (err) throw err;
                         console.log('Last insert:', result);
@@ -284,8 +285,8 @@ app.get("/pop/fgdc", (req, res) => {
 });
 
 if(config.get('protocol') === 'https' ) {
-    var certificate = fs.readFileSync(config.get('ssl_cert'));
-    var privateKey = fs.readFileSync(config.get('ssl_key'));
+    let certificate = fs.readFileSync(config.get('ssl_cert') as string);
+    let privateKey = fs.readFileSync(config.get('ssl_key') as string);
     console.log("creating https server");
     var server = https.createServer({key: privateKey, cert: certificate}, app);
     server.setTimeout(0);

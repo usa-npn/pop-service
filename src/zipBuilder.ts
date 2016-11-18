@@ -1,6 +1,6 @@
-var archiver = require('archiver');
-var config = require("config");
-var fs = require('graceful-fs');
+import * as archiver from 'archiver';
+import * as config from 'config';
+import * as fs from 'graceful-fs';
 
 
 export function createZip(downloadType: string, filesToZip: string[], requestTimestamp: number) {

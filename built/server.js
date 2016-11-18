@@ -11,19 +11,21 @@ const csvBuilders_1 = require("./csvBuilders");
 const zipBuilder_1 = require("./zipBuilder");
 const npnPortalParams_1 = require("./npnPortalParams");
 const express = require("express");
-var morgan = require('morgan');
-var bunyan = require('bunyan');
-var path = require('path');
-var bodyParser = require('body-parser');
-var config = require('config');
-var http = require('http');
-var https = require('https');
-var fs = require('graceful-fs');
-var moment = require('moment');
-var crypto = require('crypto');
-var mysql = require('mysql');
-var util = require('util');
-var pool = mysql.createPool({
+const moment = require("moment");
+const bunyan = require('bunyan');
+const morgan = require('morgan');
+const fs = require('graceful-fs');
+const bodyParser = require('body-parser');
+const crypto = require('crypto');
+const mysql = require('mysql');
+const config = require('config');
+const util = require('util');
+const path = require('path');
+// import * as http from 'http';  //not using because won't allow server.setTimeout(0);
+// import * as https from 'https';
+let http = require('http');
+let https = require('https');
+let pool = mysql.createPool({
     connectionLimit: 20,
     host: config.get('mysql_host'),
     user: config.get('mysql_user'),
@@ -35,9 +37,9 @@ let app = express();
 // allows us to consume json from post requests
 app.use(bodyParser.json());
 // create a write stream (in append mode) and set up a log to record requests
-var accessLogStream = fs.createWriteStream(path.join(config.get("logs_path"), 'access.log'), { flags: 'a' });
+let accessLogStream = fs.createWriteStream(path.join(config.get("logs_path"), 'access.log'), { flags: 'a' });
 app.use(morgan('combined', { stream: accessLogStream }));
-var log = bunyan.createLogger({
+let log = bunyan.createLogger({
     name: 'dot_service',
     streams: [
         {
@@ -235,7 +237,7 @@ app.post("/pop/search", (req, res) => {
                     saveCount = result[0].Save_Count;
                 }
                 if (!foundHash) {
-                    var popSearch = { Hash: hashedJson, Json: saveJson, Save_Count: saveCount };
+                    let popSearch = { Hash: hashedJson, Json: saveJson, Save_Count: saveCount };
                     connection.query('INSERT INTO Pop_Search SET ?', popSearch, (err, result) => {
                         if (err)
                             throw err;
@@ -269,8 +271,8 @@ app.get("/pop/fgdc", (req, res) => {
     });
 });
 if (config.get('protocol') === 'https') {
-    var certificate = fs.readFileSync(config.get('ssl_cert'));
-    var privateKey = fs.readFileSync(config.get('ssl_key'));
+    let certificate = fs.readFileSync(config.get('ssl_cert'));
+    let privateKey = fs.readFileSync(config.get('ssl_key'));
     console.log("creating https server");
     var server = https.createServer({ key: privateKey, cert: certificate }, app);
     server.setTimeout(0);

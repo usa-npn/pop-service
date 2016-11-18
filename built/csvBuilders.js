@@ -1,12 +1,12 @@
 "use strict";
-const request = require("request");
-var config = require("config");
-var stream = require("stream");
-var csv = require("csv");
-var JSONStream = require("JSONStream");
 const npnPortalParams_1 = require('./npnPortalParams');
 const headerMappings_1 = require('./headerMappings');
-var fs = require('graceful-fs');
+const request = require("request");
+const config = require('config');
+const fs = require('graceful-fs');
+const csvStringify = require('csv-stringify');
+const JSONStream = require('jsonstream');
+let stream = require("stream");
 function createSearchParametersCsv(params, requestTimestamp) {
     return new Promise((resolve, reject) => {
         // filter out unused params, beautify param keys, and convert array values to comma separated strings
@@ -24,7 +24,7 @@ function createSearchParametersCsv(params, requestTimestamp) {
         // write the csv file and resolve promise with the created csv's filename
         let searchParametersCsvFileName = 'search_parameters' + requestTimestamp.toString() + '.csv';
         let searchParametersCsvPath = config.get('save_path') + searchParametersCsvFileName;
-        csv.stringify(paramsArray, (err, output) => {
+        csvStringify(paramsArray, (err, output) => {
             fs.appendFile(searchParametersCsvPath, output, function (err) {
                 if (err) {
                     reject(err);
@@ -79,7 +79,7 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                         }
                         groups.add(chunk.observation_group_id);
                     }
-                    csv.stringify([chunk], { header: firstRow }, (err, data) => {
+                    csvStringify([chunk], { header: firstRow }, (err, data) => {
                         if (firstRow) {
                             data = headerMappings_1.renameHeaders(sheetName, data);
                             headerWrote = true;

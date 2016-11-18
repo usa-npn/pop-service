@@ -1,7 +1,7 @@
 "use strict";
-var archiver = require('archiver');
-var config = require("config");
-var fs = require('graceful-fs');
+const archiver = require('archiver');
+const config = require('config');
+const fs = require('graceful-fs');
 function createZip(downloadType, filesToZip, requestTimestamp) {
     return new Promise((resolve, reject) => {
         let zipFileName = 'datasheet_' + requestTimestamp.toString() + '.zip';

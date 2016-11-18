@@ -22,14 +22,15 @@ function getNpnPortalParams(req) {
         network: req.body.partnerGroups,
         integrated_datasets: req.body.integrated_datasets,
         dataset_ids: req.body.dataset_ids,
-        ancillary_data: req.body.ancillary_data
+        ancillary_data: req.body.ancillary_data,
+        station_id: req.body.stations
     };
     return params;
 }
 exports.getNpnPortalParams = getNpnPortalParams;
 exports.paramNamesBeautified = {
     request_src: 'Request Source:',
-    downloadType: 'Report Type:',
+    downloadType: 'Data Type:',
     start_date: 'Start Date:',
     end_date: 'End Date:',
     num_days_quality_filter: 'Data Precision Filter:',
@@ -41,5 +42,6 @@ exports.paramNamesBeautified = {
     additionalFieldDisplay: 'Output Fields:',
     qualityFlags: 'Quality Flags:',
     network: 'Partner Groups:',
-    integrated_datasets: 'Integrated Datasets:'
+    integrated_datasets: 'Integrated Datasets:',
+    station_id: 'Stations:'
 };

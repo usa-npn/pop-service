@@ -4,10 +4,13 @@
     "target": "es6",
     "noImplicitAny": true,
     "sourceMap": true,
-    "outDir": "./built/"
+    "outDir": "./built/",
+    "moduleResolution": "node",
+    "types": [
+      "node", "express", "moment", "request", "bunyan", "morgan", "graceful-fs", "body-parser", "crypto-js", "mysql", "config"
+    ]
   },
   "files": [
-    "./src/server.ts",
-    "./typings/index.d.ts"
+    "./src/server.ts"
   ]
 }
