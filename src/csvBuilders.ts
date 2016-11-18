@@ -4,9 +4,9 @@ import * as request from "request";
 import * as config from 'config';
 import * as fs from 'graceful-fs';
 import * as csvStringify from 'csv-stringify';
-import * as JSONStream from 'jsonstream';
+let JSONStream = require('JSONStream');
+//import * as JSONStream from 'jsonstream';
 let stream = require("stream");
-
 
 export function createSearchParametersCsv(params: NpnPortalParams, requestTimestamp: number) {
   return new Promise<string>((resolve, reject) => {

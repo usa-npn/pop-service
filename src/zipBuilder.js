@@ -1,7 +1,4 @@
 "use strict";
-//var archiver = require('archiver');
-//var config = require("config");
-//var fs = require('graceful-fs');
 var archiver = require('archiver');
 var config = require('config');
 var fs = require('graceful-fs');

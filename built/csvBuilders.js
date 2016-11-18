@@ -5,7 +5,8 @@ const request = require("request");
 const config = require('config');
 const fs = require('graceful-fs');
 const csvStringify = require('csv-stringify');
-const JSONStream = require('jsonstream');
+let JSONStream = require('JSONStream');
+//import * as JSONStream from 'jsonstream';
 let stream = require("stream");
 function createSearchParametersCsv(params, requestTimestamp) {
     return new Promise((resolve, reject) => {

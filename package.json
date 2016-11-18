@@ -23,7 +23,7 @@
     "body-parser": "latest",
     "bunyan": "latest",
     "config": "latest",
-    "csv": "latest",
+    "csv-stringify": "^1.0.4",
     "express": "latest",
     "graceful-fs": "latest",
     "moment": "latest",

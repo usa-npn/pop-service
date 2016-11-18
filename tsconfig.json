@@ -7,7 +7,10 @@
     "outDir": "./built/",
     "moduleResolution": "node",
     "types": [
-      "node", "express", "moment", "request", "bunyan", "morgan", "graceful-fs", "body-parser", "crypto-js", "mysql", "config"
+      "node", "express", "moment", "request", "bunyan", "morgan", "graceful-fs", "body-parser", "crypto-js", "mysql", "config", "jsonstream"
+    ],
+    "typeRoots": [
+      "node_modules/@types"
     ]
   },
   "files": [

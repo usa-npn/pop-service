@@ -2,15 +2,12 @@
 var npnPortalParams_1 = require('./npnPortalParams');
 var headerMappings_1 = require('./headerMappings');
 var request = require("request");
-//var config = require("config");
-var stream = require("stream");
-//var csv = require("csv");
-//var JSONStream = require("JSONStream");
-//var fs = require('graceful-fs');
 var config = require('config');
 var fs = require('graceful-fs');
 var csvStringify = require('csv-stringify');
-var JSONStream = require('jsonstream');
+var JSONStream = require('JSONStream');
+//import * as JSONStream from 'JSONstream';
+var stream = require("stream");
 function createSearchParametersCsv(params, requestTimestamp) {
     return new Promise(function (resolve, reject) {
         // filter out unused params, beautify param keys, and convert array values to comma separated strings
