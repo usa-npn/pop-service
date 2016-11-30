@@ -3,14 +3,14 @@
 function renameHeaders(sheetName, headerString) {
     let rows = headerString.split("\n");
     let headers = rows[0].split(",");
-    for (var header of headers) {
+    for (let header of headers) {
         if (sheetMappings[sheetName][header])
             headerString = headerString.replace(header, sheetMappings[sheetName][header]);
     }
     return headerString;
 }
 exports.renameHeaders = renameHeaders;
-var sheetMappings = {
+let sheetMappings = {
     "observation": {
         "observation_id": "Observation_ID",
         "site_id": "Site_ID",

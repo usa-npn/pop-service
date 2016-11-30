@@ -1,7 +1,7 @@
 "use strict";
 function getNpnPortalParams(req) {
     let params = {
-        request_src: 'dot_service',
+        request_src: "dot_service",
         downloadType: req.body.downloadType,
         start_date: req.body.startDate,
         end_date: req.body.endDate,
@@ -29,20 +29,20 @@ function getNpnPortalParams(req) {
 }
 exports.getNpnPortalParams = getNpnPortalParams;
 exports.paramNamesBeautified = {
-    request_src: 'Request Source:',
-    downloadType: 'Data Type:',
-    start_date: 'Start Date:',
-    end_date: 'End Date:',
-    num_days_quality_filter: 'Data Precision Filter:',
-    state: 'States:',
-    bottom_left_constraint: 'Coordinates, Bottom-Left Constraint:',
-    upper_right_constraint: 'Coordinates, Upper-Right Constraint:',
-    species_names: 'Species:',
-    phenophase_category: 'Phenophase Categories:',
-    additionalFieldDisplay: 'Output Fields:',
-    qualityFlags: 'Quality Flags:',
-    network: 'Partner Groups:',
-    integrated_datasets: 'Integrated Datasets:',
-    station_id: 'Stations:'
+    request_src: "Request Source:",
+    downloadType: "Data Type:",
+    start_date: "Start Date:",
+    end_date: "End Date:",
+    num_days_quality_filter: "Data Precision Filter:",
+    state: "States:",
+    bottom_left_constraint: "Coordinates, Bottom-Left Constraint:",
+    upper_right_constraint: "Coordinates, Upper-Right Constraint:",
+    species_names: "Species:",
+    phenophase_category: "Phenophase Categories:",
+    additionalFieldDisplay: "Output Fields:",
+    qualityFlags: "Quality Flags:",
+    network: "Partner Groups:",
+    integrated_datasets: "Integrated Datasets:",
+    station_id: "Stations:"
 };
 //# sourceMappingURL=npnPortalParams.js.map

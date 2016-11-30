@@ -1,30 +1,30 @@
 "use strict";
-const npnPortalParams_1 = require('./npnPortalParams');
-const headerMappings_1 = require('./headerMappings');
+const npnPortalParams_1 = require("./npnPortalParams");
+const headerMappings_1 = require("./headerMappings");
 const request = require("request");
-const config = require('config');
-const fs = require('graceful-fs');
-const csvStringify = require('csv-stringify');
-let JSONStream = require('JSONStream');
-//import * as JSONStream from 'jsonstream';
+const config = require("config");
+const fs = require("graceful-fs");
+const csvStringify = require("csv-stringify");
+let JSONStream = require("JSONStream");
+// import * as JSONStream from 'jsonstream';
 let stream = require("stream");
 function createSearchParametersCsv(params, requestTimestamp) {
     return new Promise((resolve, reject) => {
         // filter out unused params, beautify param keys, and convert array values to comma separated strings
         let paramsArray = [["Parameter", "Setting"]];
-        for (var key in params) {
-            if (key === 'species_id' || key === 'additional_field' || key === 'request_src' || key === 'bottom_left_x1' || key === 'bottom_left_y1' || key === 'upper_right_x2' || key === 'upper_right_y2' || key === 'ancillary_data' || key === 'dataset_ids')
+        for (let key in params) {
+            if (key === "species_id" || key === "additional_field" || key === "request_src" || key === "bottom_left_x1" || key === "bottom_left_y1" || key === "upper_right_x2" || key === "upper_right_y2" || key === "ancillary_data" || key === "dataset_ids")
                 continue;
-            if (params.hasOwnProperty(key) && params[key] && params[key] != [] && params[key] != '') {
+            if (params.hasOwnProperty(key) && params[key] && params[key] !== [] && params[key] !== "") {
                 if (params[key] instanceof Array)
-                    paramsArray.push([npnPortalParams_1.paramNamesBeautified[key], params[key].join(', ')]);
+                    paramsArray.push([npnPortalParams_1.paramNamesBeautified[key], params[key].join(", ")]);
                 else
                     paramsArray.push([npnPortalParams_1.paramNamesBeautified[key], params[key]]);
             }
         }
         // write the csv file and resolve promise with the created csv's filename
-        let searchParametersCsvFileName = 'search_parameters' + requestTimestamp.toString() + '.csv';
-        let searchParametersCsvPath = config.get('save_path') + searchParametersCsvFileName;
+        let searchParametersCsvFileName = "search_parameters" + requestTimestamp.toString() + ".csv";
+        let searchParametersCsvPath = config.get("save_path") + searchParametersCsvFileName;
         csvStringify(paramsArray, (err, output) => {
             fs.appendFile(searchParametersCsvPath, output, function (err) {
                 if (err) {
@@ -42,23 +42,23 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
     return new Promise((resolve, reject) => {
         try {
             console.log("Building csv: " + csvFileName);
-            let csvPath = config.get('save_path') + csvFileName;
-            fs.writeFile(csvPath, '', { 'flag': 'a' });
+            let csvPath = config.get("save_path") + csvFileName;
+            fs.writeFile(csvPath, "", { "flag": "a" });
             // used to know when to write csv header row
             let firstRow = writeHeader;
             let headerWrote = false;
             // don't want npnportal to change things like < to &amp;&lt;
             params.noHtmlEncoding = true;
-            let postUrl = config.get('npn_portal_path') + serviceCall;
+            let postUrl = config.get("npn_portal_path") + serviceCall;
             console.log("Making request to: " + postUrl);
             console.log("post params: " + JSON.stringify(params));
             request.post({
-                headers: { 'Content-Type': 'application/json' },
+                headers: { "Content-Type": "application/json" },
                 url: postUrl,
                 form: params
-            }).on('error', function (err) {
+            }).on("error", function (err) {
                 reject(err);
-            }).on('response', (data) => {
+            }).on("response", (data) => {
                 // Incoming chunks are json objects, we pipe them through a json parser then to objectStream
                 // Object stream converts the json to csv and writes the result to a csv file
                 // TODO: highWaterMark specifies how many objects to get at a time. Tweak this later to improve speed?
@@ -71,7 +71,7 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                         let observedByPersonIds = chunk.observedby_person_id;
                         if (observedByPersonIds) {
                             if (observedByPersonIds.split) {
-                                for (var observerId of observedByPersonIds.split(',')) {
+                                for (let observerId of observedByPersonIds.split(",")) {
                                     observers.add(observerId.replace(/'/g, ""));
                                 }
                             }
@@ -90,24 +90,24 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                         callback();
                     });
                 };
-                //save the last chunk so that we can log it in case of parsing error
-                let lastRetrievedChunk = '';
-                data.on('data', (dd) => {
+                // save the last chunk so that we can log it in case of parsing error
+                let lastRetrievedChunk = "";
+                data.on("data", (dd) => {
                     lastRetrievedChunk = dd.toString();
-                    //console.log('hello' + dd);
+                    // console.log('hello' + dd);
                 });
-                let jsonParser = JSONStream.parse('*');
-                jsonParser.on('error', (err) => {
-                    reject(err.stack + ' lastchunk = ' + lastRetrievedChunk);
+                let jsonParser = JSONStream.parse("*");
+                jsonParser.on("error", (err) => {
+                    reject(err.stack + " lastchunk = " + lastRetrievedChunk);
                 });
                 data.pipe(jsonParser).pipe(objectStream);
-                data.on('close', () => {
+                data.on("close", () => {
                     reject("The connection was closed before the response was sent!");
                 });
-                data.on('end', () => {
+                data.on("end", () => {
                     console.log("Finished getting data from npn_portal");
                 });
-                objectStream.on('finish', () => {
+                objectStream.on("finish", () => {
                     resolve([csvFileName, headerWrote]);
                 });
             });

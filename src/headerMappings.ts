@@ -1,10 +1,10 @@
 // the csv headers are not the same as the db column names so we map them here
-export function renameHeaders(sheetName : string, headerString: string): string {
+export function renameHeaders(sheetName: string, headerString: string): string {
     let rows = headerString.split("\n");
     let headers = rows[0].split(",");
-    for(var header of headers)
+    for (let header of headers)
     {
-        if(sheetMappings[sheetName][header])
+        if (sheetMappings[sheetName][header])
             headerString = headerString.replace(header, sheetMappings[sheetName][header]);
 
     }
@@ -15,12 +15,11 @@ interface HeaderMappings {
     [key: string]: string;
 }
 
-
-interface SheetMappings{
-    [key: string] : HeaderMappings;
+interface SheetMappings {
+    [key: string]: HeaderMappings;
 }
 
-var sheetMappings: SheetMappings = {
+let sheetMappings: SheetMappings = {
     "observation" : {
         "observation_id": "Observation_ID",
         "site_id": "Site_ID",
@@ -168,7 +167,7 @@ var sheetMappings: SheetMappings = {
         "participate_as_part_of_job" : "Participation_as_Part_of_Job",
         "type_of_job" : "Type_of_Job",
         "job_comments" : "Job_Comments"
-    },    
+    },
     "station" : {
         "site_id" : "Site_ID",
         "site_type" : "Site_Type",
@@ -199,7 +198,7 @@ var sheetMappings: SheetMappings = {
         "presence_of_birdbath" : "Presence_of_Birdbath",
         "presence_of_other_features_designed_to_attact_animals" : "Presence_of_Other_Features_Designed_to_Attract_Animals",
         "site_comments" : "Site_Comments",
-        "site_registration_date" : "Site_Registration_Date"        
+        "site_registration_date" : "Site_Registration_Date"
     },
     "individual" : {
         "individual_id" : "Individual_ID",

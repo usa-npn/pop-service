@@ -29,7 +29,9 @@
     "moment": "latest",
     "morgan": "latest",
     "mysql": "^2.11.1",
-    "request": "latest"
+    "request": "latest",
+    "tslint": "^3.15.1",
+    "typescript": "^2.0.10"
   },
   "main": "index.js",
   "scripts": {
