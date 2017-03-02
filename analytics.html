@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>POP Analytics</title>
+    <style>
+        h1 {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 48px;
+            font-style: normal;
+            font-variant: normal;
+        }
+
+        li {
+            list-style-type: none;
+        }
+
+        .chart-legend li span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 5px;
+        }
+
+        .chart-legend {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            font-style: normal;
+            font-variant: normal;
+        }
+    </style>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.js"></script>
+
+    <script>
+        function drawLineChart() {
+
+            // Add a helper to format timestamp data
+            Date.prototype.formatMMDDYYYY = function() {
+                return (this.getMonth() + 1) +
+                    "/" + this.getDate() +
+                    "/" + this.getFullYear();
+            }
+
+            var jsonData = $.ajax({
+                url: 'http://localhost/poplog.json',
+                dataType: 'json',
+            }).done(function(results) {
+
+                // Split timestamp and data into separate arrays
+                var labels = [],
+                    data = [];
+                dataStatusAndIntensity = [];
+                dataIndividualPhenometrics = [];
+                dataSitePhenometrics = [];
+                var count = 0;
+                var statusAndIntensityCount = 0;
+                var individualPhenometricsCount = 0;
+                var sitePhenometricsCount = 0;
+                var prevDate;
+                results.forEach(function(packet) {
+                    if (packet.downloadType) {
+                        var theDate = (new Date(packet.time).formatMMDDYYYY());
+                        if (prevDate != theDate) {
+                            prevDate = theDate;
+                            labels.push(theDate);
+                            data.push(count);
+                            dataStatusAndIntensity.push(statusAndIntensityCount);
+                            dataIndividualPhenometrics.push(individualPhenometricsCount);
+                            dataSitePhenometrics.push(sitePhenometricsCount);
+                            count = 0;
+                            statusAndIntensityCount = 0;
+                            individualPhenometricsCount = 0;
+                            sitePhenometricsCount = 0;
+                        } else {
+                            if (packet.downloadType === 'Status and Intensity') {
+                                statusAndIntensityCount += 1;
+                            }
+                            if (packet.downloadType === 'Individual Phenometrics') {
+                                individualPhenometricsCount += 1;
+                            }
+                            if (packet.downloadType === 'Site Phenometrics') {
+                                sitePhenometricsCount += 1;
+                            }
+                            count += 1;
+                        }
+                    }
+
+                });
+
+                // Create the chart.js data structure using 'labels' and 'data'
+                var popData = {
+                    labels: labels,
+                    datasets: [{
+                        label: "Total",
+                        color: "rgba(151,187,205,1)",
+                        fillColor: "rgba(151,187,205,0.2)",
+                        strokeColor: "rgba(151,187,205,1)",
+                        pointColor: "rgba(151,187,205,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(151,187,205,1)",
+                        data: data,
+                    },
+                        {
+                            label: "Status & Intensity",
+                            fillColor: "rgba(111,1,222,0.2)",
+                            strokeColor: "rgba(111,1,205,1)",
+                            pointColor: "rgba(111,1,205,1)",
+                            pointStrokeColor: "#fff",
+                            pointHighlightFill: "#fff",
+                            pointHighlightStroke: "rgba(111,1,205,1)",
+                            data: dataStatusAndIntensity,
+                        },
+                        {
+                            label: "Individual Phenometrics",
+                            fillColor: "rgba(200,1,3,0.2)",
+                            strokeColor: "rgba(200,1,3,1)",
+                            pointColor: "rgba(200,1,3,1)",
+                            pointStrokeColor: "#fff",
+                            pointHighlightFill: "#fff",
+                            pointHighlightStroke: "rgba(200,1,3,1)",
+                            data: dataIndividualPhenometrics,
+                        },
+                        {
+                            label: "Site Phenometrics",
+                            fillColor: "rgba(1,100,3,0.2)",
+                            strokeColor: "rgba(1,100,3,1)",
+                            pointColor: "rgba(1,100,3,1)",
+                            pointStrokeColor: "#fff",
+                            pointHighlightFill: "#fff",
+                            pointHighlightStroke: "rgba(1,100,3,1)",
+                            data: dataSitePhenometrics,
+                        }
+                    ]
+                };
+
+                // Get the context of the canvas element we want to select
+                var ctx = document.getElementById("popDownloadsChart").getContext("2d");
+
+                // Instantiate a new chart
+                var popDownloadsChart = new Chart(ctx).Line(popData);
+                document.getElementById("legendDiv").innerHTML = popDownloadsChart.generateLegend();
+
+            });
+        }
+
+        drawLineChart();
+    </script>
+</head>
+
+<body>
+<h1>Phenology Observation Portal Downloads</h1>
+<div>
+    <canvas id="popDownloadsChart" height="600" width="1600"></canvas>
+    <div id="legendDiv" class="chart-legend"></div>
+</div>
+</body>
+
+</html>
