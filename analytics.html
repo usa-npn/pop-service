@@ -38,7 +38,7 @@
         function drawLineChart() {
 
             window.onload = function () {
-                document.getElementById("chart-title").innerHTML = "Loading, please wait";
+                document.getElementById("chart-title").innerHTML = "Loading, please wait...";
             };
 
             // Add a helper to format timestamp data
@@ -54,45 +54,53 @@
             }).done(function(results) {
 
                 // Split timestamp and data into separate arrays
-                var labels = [],
-                    data = [];
-                dataStatusAndIntensity = [];
-                dataIndividualPhenometrics = [];
-                dataSitePhenometrics = [];
+                var labels = [];
+                var data = [];
+                var dataStatusAndIntensity = [];
+                var dataIndividualPhenometrics = [];
+                var dataSitePhenometrics = [];
                 var count = 0;
                 var statusAndIntensityCount = 0;
                 var individualPhenometricsCount = 0;
                 var sitePhenometricsCount = 0;
-                var prevDate;
+                var prevDate = "";
                 results.split("\n").forEach(function(packet) {
-                    if (!packet || packet === '')
+                    if (!packet || packet === '') {
+                        labels.push(prevDate);
+                        data.push(count);
+                        dataStatusAndIntensity.push(statusAndIntensityCount);
+                        dataIndividualPhenometrics.push(individualPhenometricsCount);
+                        dataSitePhenometrics.push(sitePhenometricsCount);
                         return;
+                    }
                     var logObject = JSON.parse(packet);
                     if (logObject.downloadType) {
                         var theDate = (new Date(logObject.time).formatMMDDYYYY());
                         if (prevDate != theDate) {
+                            if (prevDate != "") {
+                                labels.push(prevDate);
+                                data.push(count);
+                                dataStatusAndIntensity.push(statusAndIntensityCount);
+                                dataIndividualPhenometrics.push(individualPhenometricsCount);
+                                dataSitePhenometrics.push(sitePhenometricsCount);
+                            }
                             prevDate = theDate;
-                            labels.push(theDate);
-                            data.push(count);
-                            dataStatusAndIntensity.push(statusAndIntensityCount);
-                            dataIndividualPhenometrics.push(individualPhenometricsCount);
-                            dataSitePhenometrics.push(sitePhenometricsCount);
                             count = 0;
                             statusAndIntensityCount = 0;
                             individualPhenometricsCount = 0;
                             sitePhenometricsCount = 0;
-                        } else {
-                            if (logObject.downloadType === 'Status and Intensity') {
-                                statusAndIntensityCount += 1;
-                            }
-                            if (logObject.downloadType === 'Individual Phenometrics') {
-                                individualPhenometricsCount += 1;
-                            }
-                            if (logObject.downloadType === 'Site Phenometrics') {
-                                sitePhenometricsCount += 1;
-                            }
-                            count += 1;
                         }
+                        if (logObject.downloadType === 'Status and Intensity') {
+                            statusAndIntensityCount += 1;
+                        }
+                        if (logObject.downloadType === 'Individual Phenometrics') {
+                            individualPhenometricsCount += 1;
+                        }
+                        if (logObject.downloadType === 'Site Phenometrics') {
+                            sitePhenometricsCount += 1;
+                        }
+                        count += 1;
+
                     }
 
                 });
