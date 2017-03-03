@@ -45,8 +45,8 @@
             }
 
             var jsonData = $.ajax({
-                url: 'http://localhost/poplog.json',
-                dataType: 'json',
+                url: 'http://data.usanpn.org/pop-service/logs/info.log',
+                dataType: 'text',
             }).done(function(results) {
 
                 // Split timestamp and data into separate arrays
@@ -60,9 +60,12 @@
                 var individualPhenometricsCount = 0;
                 var sitePhenometricsCount = 0;
                 var prevDate;
-                results.forEach(function(packet) {
-                    if (packet.downloadType) {
-                        var theDate = (new Date(packet.time).formatMMDDYYYY());
+                results.split("\n").forEach(function(packet) {
+                    if (!packet || packet === '')
+                        return;
+                    var logObject = JSON.parse(packet);
+                    if (logObject.downloadType) {
+                        var theDate = (new Date(logObject.time).formatMMDDYYYY());
                         if (prevDate != theDate) {
                             prevDate = theDate;
                             labels.push(theDate);
@@ -75,13 +78,13 @@
                             individualPhenometricsCount = 0;
                             sitePhenometricsCount = 0;
                         } else {
-                            if (packet.downloadType === 'Status and Intensity') {
+                            if (logObject.downloadType === 'Status and Intensity') {
                                 statusAndIntensityCount += 1;
                             }
-                            if (packet.downloadType === 'Individual Phenometrics') {
+                            if (logObject.downloadType === 'Individual Phenometrics') {
                                 individualPhenometricsCount += 1;
                             }
-                            if (packet.downloadType === 'Site Phenometrics') {
+                            if (logObject.downloadType === 'Site Phenometrics') {
                                 sitePhenometricsCount += 1;
                             }
                             count += 1;
@@ -154,7 +157,7 @@
 <body>
 <h1>Phenology Observation Portal Downloads</h1>
 <div>
-    <canvas id="popDownloadsChart" height="600" width="1600"></canvas>
+    <canvas id="popDownloadsChart" height="600" width="2000"></canvas>
     <div id="legendDiv" class="chart-legend"></div>
 </div>
 </body>
