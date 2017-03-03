@@ -37,6 +37,10 @@
     <script>
         function drawLineChart() {
 
+            window.onload = function () {
+                document.getElementById("chart-title").innerHTML = "Loading, please wait";
+            };
+
             // Add a helper to format timestamp data
             Date.prototype.formatMMDDYYYY = function() {
                 return (this.getMonth() + 1) +
@@ -140,6 +144,8 @@
                     ]
                 };
 
+                document.getElementById("chart-title").innerHTML = "Phenology Observation Portal Downloads";
+
                 // Get the context of the canvas element we want to select
                 var ctx = document.getElementById("popDownloadsChart").getContext("2d");
 
@@ -155,7 +161,7 @@
 </head>
 
 <body>
-<h1>Phenology Observation Portal Downloads</h1>
+<h1 id="chart-title">Phenology Observation Portal Downloads</h1>
 <div>
     <canvas id="popDownloadsChart" height="600" width="2000"></canvas>
     <div id="legendDiv" class="chart-legend"></div>
