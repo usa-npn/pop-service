@@ -45,7 +45,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
     try {
       console.log("Building csv: " + csvFileName);
       let csvPath = config.get("save_path") + csvFileName;
-      fs.writeFile(csvPath, "",  {"flag": "a"});
+      fs.writeFileSync(csvPath, "",  {"flag": "a"});
 
       // used to know when to write csv header row
       let firstRow = writeHeader;
@@ -53,6 +53,9 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
 
       // don't want npnportal to change things like < to &amp;&lt;
       params.noHtmlEncoding = true;
+
+      let chunkCount = 0;
+      let jsonObjectCount = 0;
 
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
@@ -63,13 +66,18 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         form: params
       }).on("error", function(err) {
         reject(err);
-      }).on("response", (data) => {
+      }).on("response", (res) => {
         // Incoming chunks are json objects, we pipe them through a json parser then to objectStream
         // Object stream converts the json to csv and writes the result to a csv file
         // TODO: highWaterMark specifies how many objects to get at a time. Tweak this later to improve speed?
 
+        console.log("creating raw output file");
+        let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
+
         let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
         objectStream._write = (chunk: any, encoding: string, callback: Function) => {
+
+          jsonObjectCount += 1;
 
           if (observationsCsv) {
             // save some info to help produce (filter results) in other generated csv files
@@ -89,6 +97,10 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           }
 
           csvStringify([chunk], {header: firstRow}, (err: any, data: any) => {
+            if (err) {
+              console.log("csvStringify Error" + err);
+              reject(err);
+            }
             if (firstRow) {
               data = renameHeaders(sheetName, data);
               headerWrote = true;
@@ -101,28 +113,37 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
 
         // save the last chunk so that we can log it in case of parsing error
         let lastRetrievedChunk = "";
-        data.on("data", (dd: any) => {
-          lastRetrievedChunk = dd.toString();
-          // console.log('hello' + dd);
+        res.on("data", (chunk: any) => {
+          chunkCount += 1;
+          fs.writeSync(fd, chunk.toString());
+          lastRetrievedChunk = chunk.toString();
+          // console.log('hello' + chunk);
         });
 
         let jsonParser = JSONStream.parse("*");
         jsonParser.on("error", (err: any) => {
+          console.log("jsonParser error: " + err.stack);
           reject(err.stack + " lastchunk = " + lastRetrievedChunk);
         });
-        data.pipe(jsonParser).pipe(objectStream);
+        res.pipe(jsonParser).pipe(objectStream);
 
-        data.on("close", () => {
+        res.on("close", () => {
+          console.log("The connection was closed before the response was sent!");
           reject("The connection was closed before the response was sent!");
         });
-        data.on("end", () => {
+        res.on("end", () => {
+          console.log("chunkCount: " + chunkCount);
+          console.log(lastRetrievedChunk);
           console.log("Finished getting data from npn_portal");
         });
         objectStream.on("finish", () => {
+          console.log("jsonObjectCount: " + jsonObjectCount);
+          console.log("finish event called: resolving");
           resolve([csvFileName, headerWrote]);
         });
       });
     } catch (error) {
+      console.log("caught an error: " + error);
       reject(error);
     }
   });
