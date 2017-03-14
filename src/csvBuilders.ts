@@ -61,7 +61,9 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
       request.post({
-        headers: {"Content-Type": "application/json"},
+        headers: {"Content-Type": "application/json", "Connection": "Keep-alive"},
+        timeout: 9000000,
+        forever: true,
         url: postUrl,
         form: params
       }).on("error", function(err) {

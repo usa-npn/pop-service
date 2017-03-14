@@ -33,7 +33,7 @@ let app = express();
 app.use(bodyParser.json());
 
 // create a write stream (in append mode) and set up a log to record requests
-let accessLogStream = fs.createWriteStream(path.join(config.get("logs_path"), "access.log"), {flags: "a"});
+let accessLogStream = fs.createWriteStream(path.join(config.get("logs_path").toString(), "access.log"), {flags: "a"});
 app.use(morgan("combined", {stream: accessLogStream}));
 
 let log = bunyan.createLogger({
@@ -41,11 +41,11 @@ let log = bunyan.createLogger({
     streams: [
         {
             level: "info",
-            path: path.join(config.get("logs_path"), "info.log")
+            path: path.join(config.get("logs_path").toString(), "info.log")
         },
         {
             level: "error",
-            path: path.join(config.get("logs_path"), "error.log")
+            path: path.join(config.get("logs_path").toString(), "error.log")
         }
     ]
 });
