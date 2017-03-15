@@ -80,6 +80,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           }
           groups.add(chunk.observation_group_id);
         }
+        this.push(chunk);
         callback();
       };
       csvStream._transform = function (chunk: any, encoding: string, callback: Function) {
@@ -93,6 +94,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
             headerWrote = true;
             firstRow = false;
           }
+          this.push(data);
           callback();
         });
       };
