@@ -57,8 +57,49 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let chunkCount = 0;
       let jsonObjectCount = 0;
 
+      let jsonParser = JSONStream.parse("*");
       let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
 
+      objectStream._write = function (chunk: any, encoding: string, callback: Function) {
+
+        jsonObjectCount += 1;
+
+        if (observationsCsv) {
+          // save some info to help produce (filter results) in other generated csv files
+          sites.add(chunk.site_id);
+          individuals.add(chunk.individual_id);
+          let observedByPersonIds = chunk.observedby_person_id;
+          if (observedByPersonIds) {
+            if (observedByPersonIds.split) {
+              for (let observerId of observedByPersonIds.split(",")) {
+                observers.add(<number> observerId.replace(/'/g, ""));
+              }
+            }
+            else
+              observers.add(observedByPersonIds);
+          }
+          groups.add(chunk.observation_group_id);
+        }
+
+        csvStringify([chunk], {header: firstRow}, function (err: any, data: any) {
+          if (err) {
+            console.log("csvStringify Error" + err);
+            reject(err);
+          }
+          if (firstRow) {
+            data = renameHeaders(sheetName, data);
+            headerWrote = true;
+            firstRow = false;
+          }
+          fs.appendFile(csvPath, data, function (error) {
+            if (err) {
+              console.log("appendFile error: " + error);
+              reject(error);
+            }
+            callback();
+          });
+        });
+      };
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
@@ -76,64 +117,26 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         // TODO: highWaterMark specifies how many objects to get at a time. Tweak this later to improve speed?
 
         console.log("creating raw output file");
-        let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
-
-        objectStream._write = function (chunk: any, encoding: string, callback: Function) {
-
-          jsonObjectCount += 1;
-
-          if (observationsCsv) {
-            // save some info to help produce (filter results) in other generated csv files
-            sites.add(chunk.site_id);
-            individuals.add(chunk.individual_id);
-            let observedByPersonIds = chunk.observedby_person_id;
-            if (observedByPersonIds) {
-              if (observedByPersonIds.split) {
-                for (let observerId of observedByPersonIds.split(",")) {
-                  observers.add(<number> observerId.replace(/'/g, ""));
-                }
-              }
-              else
-                observers.add(observedByPersonIds);
-            }
-            groups.add(chunk.observation_group_id);
-          }
-
-          csvStringify([chunk], {header: firstRow}, function (err: any, data: any) {
-            if (err) {
-              console.log("csvStringify Error" + err);
-              reject(err);
-            }
-            if (firstRow) {
-              data = renameHeaders(sheetName, data);
-              headerWrote = true;
-              firstRow = false;
-            }
-            fs.appendFile(csvPath, data, function (error) {
-              if (err) {
-                console.log("appendFile error: " + error);
-                reject(error);
-              }
-              callback();
-            });
-          });
-        };
-
+        // let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
         // save the last chunk so that we can log it in case of parsing error
         let lastRetrievedChunk = "";
-        res.on("data", function (chunk: any) {
-          chunkCount += 1;
-          fs.writeSync(fd, chunk.toString());
-          lastRetrievedChunk = chunk.toString();
-          // console.log('hello' + chunk);
-        });
-
-        let jsonParser = JSONStream.parse("*");
+        // res.on("data", function (chunk: any) {
+        //   chunkCount += 1;
+        //   fs.writeSync(fd, chunk.toString());
+        //   lastRetrievedChunk = chunk.toString();
+        //   // console.log('hello' + chunk);
+        // });
         jsonParser.on("error", (err: any) => {
           console.log("jsonParser error: " + err.stack);
           reject(err.stack + " lastchunk = " + lastRetrievedChunk);
         });
-        res.pipe(jsonParser).pipe(objectStream);
+        res.pipe(jsonParser).on("error", function(e: any) {
+          console.log("jsonParser pipe error: " + e);
+          reject(e);
+        }).pipe(objectStream).on("error", function(e: any) {
+          console.log("objectStream pipe error: " + e);
+          reject(e);
+        });
 
         res.on("close", () => {
           console.log("The connection was closed before the response was sent!");
