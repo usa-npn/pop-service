@@ -58,12 +58,12 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let jsonObjectCount = 0;
 
       let jsonParser = JSONStream.parse("*");
-      let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
-
-      objectStream._write = function (chunk: any, encoding: string, callback: Function) {
-
+      // let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
+      let transformStream = new stream.Transform({highWaterMark: 1, objectMode: true});
+      let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
+      let writeStream = fs.createWriteStream(csvPath);
+      transformStream._transform = function (chunk: any, encoding: string, callback: Function) {
         jsonObjectCount += 1;
-
         if (observationsCsv) {
           // save some info to help produce (filter results) in other generated csv files
           sites.add(chunk.site_id);
@@ -80,7 +80,9 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           }
           groups.add(chunk.observation_group_id);
         }
-
+        callback();
+      };
+      csvStream._transform = function (chunk: any, encoding: string, callback: Function) {
         csvStringify([chunk], {header: firstRow}, function (err: any, data: any) {
           if (err) {
             console.log("csvStringify Error" + err);
@@ -91,13 +93,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
             headerWrote = true;
             firstRow = false;
           }
-          fs.appendFile(csvPath, data, function (error) {
-            if (err) {
-              console.log("appendFile error: " + error);
-              reject(error);
-            }
-            callback();
-          });
+          callback();
         });
       };
       let postUrl = config.get("npn_portal_path") + serviceCall;
@@ -112,10 +108,6 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       }).on("error", function(err) {
         reject(err);
       }).on("response", function (res) {
-        // Incoming chunks are json objects, we pipe them through a json parser then to objectStream
-        // Object stream converts the json to csv and writes the result to a csv file
-        // TODO: highWaterMark specifies how many objects to get at a time. Tweak this later to improve speed?
-
         console.log("creating raw output file");
         // let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
         // save the last chunk so that we can log it in case of parsing error
@@ -130,14 +122,6 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("jsonParser error: " + err.stack);
           reject(err.stack + " lastchunk = " + lastRetrievedChunk);
         });
-        res.pipe(jsonParser).on("error", function(e: any) {
-          console.log("jsonParser pipe error: " + e);
-          reject(e);
-        }).pipe(objectStream).on("error", function(e: any) {
-          console.log("objectStream pipe error: " + e);
-          reject(e);
-        });
-
         res.on("close", () => {
           console.log("The connection was closed before the response was sent!");
           reject("The connection was closed before the response was sent!");
@@ -147,13 +131,17 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log(lastRetrievedChunk);
           console.log("Finished getting data from npn_portal");
         });
-        objectStream.on("error", (err: any) => {
+        writeStream.on("error", (err: any) => {
           console.log("objectStream error: " + err);
         });
-        objectStream.on("finish", () => {
+        writeStream.on("finish", () => {
           console.log("jsonObjectCount: " + jsonObjectCount);
           console.log("finish event called: resolving");
           resolve([csvFileName, headerWrote]);
+        });
+        res.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream).on("error", function(e: any) {
+          console.log("pipe error: " + e);
+          reject(e);
         });
       });
     } catch (error) {
