@@ -141,7 +141,6 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("finished retrieving npn_portal results");
           let readStream = fs.createReadStream(rawPath);
           readStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
-          resolve([csvFileName, headerWrote]);
         });
         writeStream.on("error", (err: any) => {
           console.log("objectStream error: " + err);
