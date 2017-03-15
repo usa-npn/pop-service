@@ -84,7 +84,8 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         callback();
       };
       csvStream._transform = function (chunk: any, encoding: string, callback: Function) {
-        csvStringify([chunk], {header: firstRow}, function (err: any, data: any) {
+        let that = this;
+        csvStringify([chunk], {header: firstRow}, (err: any, data: any) => {
           if (err) {
             console.log("csvStringify Error" + err);
             reject(err);
@@ -94,7 +95,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
             headerWrote = true;
             firstRow = false;
           }
-          this.push(data);
+          that.push(data);
           callback();
         });
       };
