@@ -45,7 +45,9 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
     try {
       console.log("Building csv: " + csvFileName);
       let csvPath = config.get("save_path") + csvFileName;
+      let rawPath = csvPath + "_json";
       fs.writeFileSync(csvPath, "",  {"flag": "a"});
+      fs.writeFileSync(rawPath, "",  {"flag": "a"});
 
       // used to know when to write csv header row
       let firstRow = writeHeader;
@@ -61,6 +63,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       // let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
       let transformStream = new stream.Transform({highWaterMark: 1, objectMode: true});
       let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
+      let syncStream = fs.createWriteStream(rawPath);
       let writeStream = fs.createWriteStream(csvPath);
       transformStream._transform = function (chunk: any, encoding: string, callback: Function) {
         jsonObjectCount += 1;
@@ -134,6 +137,12 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log(lastRetrievedChunk);
           console.log("Finished getting data from npn_portal");
         });
+        syncStream.on("finish", () => {
+          console.log("finished retrieving npn_portal results");
+          let readStream = fs.createReadStream(rawPath);
+          readStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
+          resolve([csvFileName, headerWrote]);
+        });
         writeStream.on("error", (err: any) => {
           console.log("objectStream error: " + err);
         });
@@ -142,10 +151,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("finish event called: resolving");
           resolve([csvFileName, headerWrote]);
         });
-        res.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream).on("error", function(e: any) {
-          console.log("pipe error: " + e);
-          reject(e);
-        });
+        res.pipe(syncStream);
       });
     } catch (error) {
       console.log("caught an error: " + error);
