@@ -57,6 +57,8 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let chunkCount = 0;
       let jsonObjectCount = 0;
 
+      let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
+
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
@@ -68,7 +70,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         form: params
       }).on("error", function(err) {
         reject(err);
-      }).on("response", (res) => {
+      }).on("response", function (res) {
         // Incoming chunks are json objects, we pipe them through a json parser then to objectStream
         // Object stream converts the json to csv and writes the result to a csv file
         // TODO: highWaterMark specifies how many objects to get at a time. Tweak this later to improve speed?
@@ -76,8 +78,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         console.log("creating raw output file");
         let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
 
-        let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
-        objectStream._write = (chunk: any, encoding: string, callback: Function) => {
+        objectStream._write = function (chunk: any, encoding: string, callback: Function) {
 
           jsonObjectCount += 1;
 
@@ -98,7 +99,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
             groups.add(chunk.observation_group_id);
           }
 
-          csvStringify([chunk], {header: firstRow}, (err: any, data: any) => {
+          csvStringify([chunk], {header: firstRow}, function (err: any, data: any) {
             if (err) {
               console.log("csvStringify Error" + err);
               reject(err);
@@ -108,14 +109,19 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
               headerWrote = true;
               firstRow = false;
             }
-            fs.appendFileSync(csvPath, data);
-            callback();
+            fs.appendFile(csvPath, data, function (error) {
+              if (err) {
+                console.log("appendFile error: " + error);
+                reject(error);
+              }
+              callback();
+            });
           });
         };
 
         // save the last chunk so that we can log it in case of parsing error
         let lastRetrievedChunk = "";
-        res.on("data", (chunk: any) => {
+        res.on("data", function (chunk: any) {
           chunkCount += 1;
           fs.writeSync(fd, chunk.toString());
           lastRetrievedChunk = chunk.toString();
@@ -137,6 +143,9 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("chunkCount: " + chunkCount);
           console.log(lastRetrievedChunk);
           console.log("Finished getting data from npn_portal");
+        });
+        objectStream.on("error", (err: any) => {
+          console.log("objectStream error: " + err);
         });
         objectStream.on("finish", () => {
           console.log("jsonObjectCount: " + jsonObjectCount);
