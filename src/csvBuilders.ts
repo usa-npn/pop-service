@@ -60,9 +60,16 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
 
       // converts incoming chunked json string into json objects
       let jsonParser = JSONStream.parse("*");
-      // saves sites, individuals, observers, groups, etc from incoming objects into arrays for use in other csv reports
-      let transformStream = new stream.Transform({highWaterMark: 1, objectMode: true});
-      transformStream._transform = function (chunk: any, encoding: string, callback: Function) {
+      // buffers incoming data from npn_portal, need this because pausing the response stream causes data loss
+      let bufferStream = new stream.Transform();
+      bufferStream._transform = function (chunk: any, encoding: string, callback: Function) {
+        this.push(chunk);
+        callback();
+      };
+      // converts json objects to csv rows
+      let csvStream = new stream.Transform({objectMode: true});
+      csvStream._transform = function (chunk: any, encoding: string, callback: Function) {
+        // saves sites, individuals, observers, groups, etc from incoming objects into arrays for use in other reports
         jsonObjectCount += 1;
         if (observationsCsv) {
           // save some info to help produce (filter results) in other generated csv files
@@ -80,18 +87,6 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           }
           groups.add(chunk.observation_group_id);
         }
-        this.push(chunk);
-        callback();
-      };
-      // buffers incoming data from npn_portal, need this because pausing the response stream causes data loss
-      let bufferStream = new stream.Transform({highWaterMark: 786432});
-      bufferStream._transform = function (chunk: any, encoding: string, callback: Function) {
-        this.push(chunk);
-        callback();
-      };
-      // converts json objects to csv rows
-      let csvStream = new stream.Transform({highWaterMark: 100, objectMode: true});
-      csvStream._transform = function (chunk: any, encoding: string, callback: Function) {
         let that = this;
         csvStringify([chunk], {header: firstRow}, (err: any, data: any) => {
           if (err) {
@@ -108,8 +103,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         });
       };
       // writes the csv rows to disk
-      let writeOpts = {highWaterMark: Math.pow(2, 16)};
-      let writeStream = fs.createWriteStream(csvPath, writeOpts);
+      let writeStream = fs.createWriteStream(csvPath);
       // all the stream events we listen for
       bufferStream.on("error", (err: any) => {
         console.log("bufferStream error: " + err);
@@ -118,10 +112,6 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       jsonParser.on("error", (err: any) => {
         console.log("jsonParser error: " + err.stack);
         reject(err.stack + " lastchunk = " + lastRetrievedChunk);
-      });
-      transformStream.on("error", (err: any) => {
-        console.log("transformStream error: " + err);
-        reject(err);
       });
       writeStream.on("error", (err: any) => {
         console.log("objectStream error: " + err);
@@ -133,7 +123,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         resolve([csvFileName, headerWrote]);
       });
       // compose all the streams together
-      bufferStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
+      bufferStream.pipe(jsonParser).pipe(csvStream).pipe(writeStream);
       // make the npn_portal request
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
