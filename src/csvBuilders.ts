@@ -87,7 +87,6 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           }
           groups.add(chunk.observation_group_id);
         }
-        let that = this;
         csvStringify([chunk], {header: firstRow}, (err: any, data: any) => {
           if (err) {
             console.log("csvStringify Error" + err);
@@ -98,7 +97,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
             headerWrote = true;
             firstRow = false;
           }
-          that.push(data);
+          this.push(data);
           callback();
         });
       };
