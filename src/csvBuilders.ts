@@ -5,7 +5,6 @@ import * as config from "config";
 import * as fs from "graceful-fs";
 import * as csvStringify from "csv-stringify";
 let JSONStream = require("JSONStream");
-// import * as JSONStream from 'jsonstream';
 let stream = require("stream");
 
 export function createSearchParametersCsv(params: NpnPortalParams, requestTimestamp: number) {
@@ -45,9 +44,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
     try {
       console.log("Building csv: " + csvFileName);
       let csvPath = config.get("save_path") + csvFileName;
-      let rawPath = csvPath + "_json";
       fs.writeFileSync(csvPath, "",  {"flag": "a"});
-      fs.writeFileSync(rawPath, "",  {"flag": "a"});
 
       // used to know when to write csv header row
       let firstRow = writeHeader;
@@ -56,20 +53,15 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       // don't want npnportal to change things like < to &amp;&lt;
       params.noHtmlEncoding = true;
 
+      // used for debugging
+      let lastRetrievedChunk = "";
       let chunkCount = 0;
       let jsonObjectCount = 0;
 
+      // converts incoming chunked json string into json objects
       let jsonParser = JSONStream.parse("*");
-      // let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
+      // saves sites, individuals, observers, groups, etc from incoming objects into arrays for use in other csv reports
       let transformStream = new stream.Transform({highWaterMark: 1, objectMode: true});
-      let bufferStream = new stream.Transform();
-      let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
-      // let syncStream = fs.createWriteStream(rawPath);
-      let writeStream = fs.createWriteStream(csvPath);
-      bufferStream._transform = function (chunk: any, encoding: string, callback: Function) {
-        this.push(chunk);
-        callback();
-      };
       transformStream._transform = function (chunk: any, encoding: string, callback: Function) {
         jsonObjectCount += 1;
         if (observationsCsv) {
@@ -91,6 +83,14 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         this.push(chunk);
         callback();
       };
+      // buffers incoming data from npn_portal, need this because pausing the response stream causes data loss
+      let bufferStream = new stream.Transform();
+      bufferStream._transform = function (chunk: any, encoding: string, callback: Function) {
+        this.push(chunk);
+        callback();
+      };
+      // converts json objects to csv rows
+      let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
       csvStream._transform = function (chunk: any, encoding: string, callback: Function) {
         let that = this;
         csvStringify([chunk], {header: firstRow}, (err: any, data: any) => {
@@ -107,69 +107,63 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           callback();
         });
       };
+      // writes the csv rows to disk
+      let writeStream = fs.createWriteStream(csvPath);
+      // all the stream events we listen for
+      bufferStream.on("error", (err: any) => {
+        console.log("bufferStream error: " + err);
+        reject(err);
+      });
+      jsonParser.on("error", (err: any) => {
+        console.log("jsonParser error: " + err.stack);
+        reject(err.stack + " lastchunk = " + lastRetrievedChunk);
+      });
+      transformStream.on("error", (err: any) => {
+        console.log("transformStream error: " + err);
+        reject(err);
+      });
       writeStream.on("error", (err: any) => {
         console.log("objectStream error: " + err);
+        reject(err);
       });
       writeStream.on("finish", () => {
         console.log("jsonObjectCount: " + jsonObjectCount);
         console.log("finish event called: resolving");
         resolve([csvFileName, headerWrote]);
       });
+      // compose all the streams together
       bufferStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
+      // make the npn_portal request
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
       request.post({
-        headers: {"X-Accel-Buffering": "no", "Content-Type": "application/json", "Connection": "Keep-alive"},
-        timeout: 9000000,
-        forever: true,
+        headers: {"Content-Type": "application/json"},
         url: postUrl,
         form: params
       }).on("error", function(err) {
         reject(err);
       }).on("response", function (res) {
-        console.log("creating raw output file");
-        // let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
-        // save the last chunk so that we can log it in case of parsing error
-        let lastRetrievedChunk = "";
-        // res.on("data", function (chunk: any) {
-        //   chunkCount += 1;
-        //   fs.writeSync(fd, chunk.toString());
-        //   lastRetrievedChunk = chunk.toString();
-        //   // console.log('hello' + chunk);
-        // });
-        jsonParser.on("error", (err: any) => {
-          console.log("jsonParser error: " + err.stack);
-          reject(err.stack + " lastchunk = " + lastRetrievedChunk);
-        });
+        console.log("beginning to receive data from npn_portal");
         res.on("close", () => {
           console.log("The connection was closed before the response was sent!");
           reject("The connection was closed before the response was sent!");
         });
         res.on("end", () => {
-          console.log("chunkCount: " + chunkCount);
+          console.log("finished receiving data from npn_portal");
+          console.log("chunks received: " + chunkCount);
+          console.log("last chunk received: ");
           console.log(lastRetrievedChunk);
-          console.log("Finished getting data from npn_portal");
+          // this seems needed, without it, the writeStream finish event never fired
           bufferStream.end();
         });
-        // syncStream.on("finish", () => {
-        //   console.log("finished retrieving npn_portal results");
-        //   let readStream = fs.createReadStream(rawPath);
-        //   readStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
-        // });
-        // writeStream.on("error", (err: any) => {
-        //   console.log("objectStream error: " + err);
-        // });
-        // writeStream.on("finish", () => {
-        //   console.log("jsonObjectCount: " + jsonObjectCount);
-        //   console.log("finish event called: resolving");
-        //   resolve([csvFileName, headerWrote]);
-        // });
+        // by listening to on data, we start a push stream (like a water tap: once you open it, it keeps gushing water.)
         res.on("data", function (chunk: any) {
+          chunkCount += 1;
+          // here we push the data onto the bufferStream as it comes in
+          // from there we can use piping to pull the data through each stream as needed
           bufferStream.write(chunk);
         });
-        // res.pipe(syncStream);
-        // bufferStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
       });
     } catch (error) {
       console.log("caught an error: " + error);
