@@ -106,7 +106,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
       request.post({
-        headers: {"Content-Type": "application/json", "Connection": "Keep-alive"},
+        headers: {"X-Accel-Buffering": "no", "Content-Type": "application/json", "Connection": "Keep-alive"},
         timeout: 9000000,
         forever: true,
         url: postUrl,
@@ -150,7 +150,11 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("finish event called: resolving");
           resolve([csvFileName, headerWrote]);
         });
-        res.pipe(syncStream);
+        // res.on("data", function (chunk: any) {
+        //   jsonParser.
+        // });
+        // res.pipe(syncStream);
+        res.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
       });
     } catch (error) {
       console.log("caught an error: " + error);
