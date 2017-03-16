@@ -7,7 +7,6 @@ import * as csvStringify from "csv-stringify";
 let JSONStream = require("JSONStream");
 // import * as JSONStream from 'jsonstream';
 let stream = require("stream");
-let http = require("http");
 
 export function createSearchParametersCsv(params: NpnPortalParams, requestTimestamp: number) {
   return new Promise<string>((resolve, reject) => {
@@ -63,6 +62,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let jsonParser = JSONStream.parse("*");
       // let objectStream = new stream.Writable({highWaterMark: 1, objectMode: true});
       let transformStream = new stream.Transform({highWaterMark: 1, objectMode: true});
+      let bufferStream = new stream.Transform();
       let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
       let syncStream = fs.createWriteStream(rawPath);
       let writeStream = fs.createWriteStream(csvPath);
@@ -106,15 +106,15 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
-      http.request.post({
+      request.post({
         headers: {"X-Accel-Buffering": "no", "Content-Type": "application/json", "Connection": "Keep-alive"},
         timeout: 9000000,
         forever: true,
         url: postUrl,
         form: params
-      }).on("error", function(err: any) {
+      }).on("error", function(err) {
         reject(err);
-      }).on("response", function (res: any) {
+      }).on("response", function (res) {
         console.log("creating raw output file");
         // let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
         // save the last chunk so that we can log it in case of parsing error
@@ -151,11 +151,11 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("finish event called: resolving");
           resolve([csvFileName, headerWrote]);
         });
-        // res.on("data", function (chunk: any) {
-        //
-        // });
+        res.on("data", function (chunk: any) {
+          bufferStream.write(chunk);
+        });
         // res.pipe(syncStream);
-        res.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
+        bufferStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
       });
     } catch (error) {
       console.log("caught an error: " + error);
