@@ -66,6 +66,10 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
       let syncStream = fs.createWriteStream(rawPath);
       let writeStream = fs.createWriteStream(csvPath);
+      bufferStream._transform = function (chunk: any, encoding: string, callback: Function) {
+        this.push(chunk);
+        callback();
+      };
       transformStream._transform = function (chunk: any, encoding: string, callback: Function) {
         jsonObjectCount += 1;
         if (observationsCsv) {
