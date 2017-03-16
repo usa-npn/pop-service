@@ -7,6 +7,7 @@ import * as csvStringify from "csv-stringify";
 let JSONStream = require("JSONStream");
 // import * as JSONStream from 'jsonstream';
 let stream = require("stream");
+let http = require("http");
 
 export function createSearchParametersCsv(params: NpnPortalParams, requestTimestamp: number) {
   return new Promise<string>((resolve, reject) => {
@@ -105,15 +106,15 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
-      request.post({
+      http.request.post({
         headers: {"X-Accel-Buffering": "no", "Content-Type": "application/json", "Connection": "Keep-alive"},
         timeout: 9000000,
         forever: true,
         url: postUrl,
         form: params
-      }).on("error", function(err) {
+      }).on("error", function(err: any) {
         reject(err);
-      }).on("response", function (res) {
+      }).on("response", function (res: any) {
         console.log("creating raw output file");
         // let fd = fs.openSync("/home/jswitzer/raw_data.txt", "a");
         // save the last chunk so that we can log it in case of parsing error
@@ -151,7 +152,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           resolve([csvFileName, headerWrote]);
         });
         // res.on("data", function (chunk: any) {
-        //   jsonParser.
+        //
         // });
         // res.pipe(syncStream);
         res.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
