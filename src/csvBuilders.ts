@@ -64,7 +64,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       let transformStream = new stream.Transform({highWaterMark: 1, objectMode: true});
       let bufferStream = new stream.Transform();
       let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
-      let syncStream = fs.createWriteStream(rawPath);
+      // let syncStream = fs.createWriteStream(rawPath);
       let writeStream = fs.createWriteStream(csvPath);
       bufferStream._transform = function (chunk: any, encoding: string, callback: Function) {
         this.push(chunk);
@@ -107,6 +107,15 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           callback();
         });
       };
+      writeStream.on("error", (err: any) => {
+        console.log("objectStream error: " + err);
+      });
+      writeStream.on("finish", () => {
+        console.log("jsonObjectCount: " + jsonObjectCount);
+        console.log("finish event called: resolving");
+        resolve([csvFileName, headerWrote]);
+      });
+      bufferStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
       let postUrl = config.get("npn_portal_path") + serviceCall;
       console.log("Making request to: " + postUrl);
       console.log("post params: " + JSON.stringify(params));
@@ -141,25 +150,26 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("chunkCount: " + chunkCount);
           console.log(lastRetrievedChunk);
           console.log("Finished getting data from npn_portal");
+          bufferStream.end();
         });
-        syncStream.on("finish", () => {
-          console.log("finished retrieving npn_portal results");
-          let readStream = fs.createReadStream(rawPath);
-          readStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
-        });
-        writeStream.on("error", (err: any) => {
-          console.log("objectStream error: " + err);
-        });
-        writeStream.on("finish", () => {
-          console.log("jsonObjectCount: " + jsonObjectCount);
-          console.log("finish event called: resolving");
-          resolve([csvFileName, headerWrote]);
-        });
+        // syncStream.on("finish", () => {
+        //   console.log("finished retrieving npn_portal results");
+        //   let readStream = fs.createReadStream(rawPath);
+        //   readStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
+        // });
+        // writeStream.on("error", (err: any) => {
+        //   console.log("objectStream error: " + err);
+        // });
+        // writeStream.on("finish", () => {
+        //   console.log("jsonObjectCount: " + jsonObjectCount);
+        //   console.log("finish event called: resolving");
+        //   resolve([csvFileName, headerWrote]);
+        // });
         res.on("data", function (chunk: any) {
           bufferStream.write(chunk);
         });
         // res.pipe(syncStream);
-        bufferStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
+        // bufferStream.pipe(jsonParser).pipe(transformStream).pipe(csvStream).pipe(writeStream);
       });
     } catch (error) {
       console.log("caught an error: " + error);
