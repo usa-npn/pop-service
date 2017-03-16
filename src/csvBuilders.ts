@@ -154,7 +154,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
           console.log("chunks received: " + chunkCount);
           console.log("last chunk received: ");
           console.log(lastRetrievedChunk);
-          // this seems needed, without it, the writeStream finish event never fired
+          // signals that no more data will be written to the bufferStream
           bufferStream.end();
         });
         // by listening to on data, we start a push stream (like a water tap: once you open it, it keeps gushing water.)
