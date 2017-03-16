@@ -84,13 +84,13 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         callback();
       };
       // buffers incoming data from npn_portal, need this because pausing the response stream causes data loss
-      let bufferStream = new stream.Transform();
+      let bufferStream = new stream.Transform({highWaterMark: 786432});
       bufferStream._transform = function (chunk: any, encoding: string, callback: Function) {
         this.push(chunk);
         callback();
       };
       // converts json objects to csv rows
-      let csvStream = new stream.Transform({highWaterMark: 1, objectMode: true});
+      let csvStream = new stream.Transform({highWaterMark: 100, objectMode: true});
       csvStream._transform = function (chunk: any, encoding: string, callback: Function) {
         let that = this;
         csvStringify([chunk], {header: firstRow}, (err: any, data: any) => {
@@ -108,7 +108,8 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         });
       };
       // writes the csv rows to disk
-      let writeStream = fs.createWriteStream(csvPath);
+      let writeOpts = {highWaterMark: Math.pow(2, 16)};
+      let writeStream = fs.createWriteStream(csvPath, writeOpts);
       // all the stream events we listen for
       bufferStream.on("error", (err: any) => {
         console.log("bufferStream error: " + err);
