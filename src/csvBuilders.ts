@@ -102,7 +102,7 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
         });
       };
       // writes the csv rows to disk
-      let writeStream = fs.createWriteStream(csvPath);
+      let writeStream = fs.createWriteStream(csvPath, {flags: "a"});
       // all the stream events we listen for
       bufferStream.on("error", (err: any) => {
         console.log("bufferStream error: " + err);
