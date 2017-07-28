@@ -267,7 +267,7 @@ function validateInput(req : any){
 
     let regex = new RegExp("^https?:\/\/[a-zA-Z-]+\.usanpn\.org\/[a-zA-Z0-9\(\)\+\"-].+", 'i');    
     return regex.test(req.body.resource_url) && 
-    //regex.test(req.body.citation_url) && 
+    regex.test(req.body.citation_url) && 
     regex.test(req.body.metadata_url);
 
 }
