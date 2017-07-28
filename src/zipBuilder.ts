@@ -40,3 +40,38 @@ export function createZip(downloadType: string, filesToZip: string[], requestTim
         archive.finalize();
     });
 }
+
+
+export function zipGeoserverData(filesToZip: string[], requestTimestamp: number) {
+    return new Promise<string>((resolve, reject) => {
+        
+        let zipFileName = "geoserver_" + requestTimestamp.toString() + ".zip";
+        let zipFilePath = config.get("save_path") + zipFileName;
+        let zipStream = fs.createWriteStream(zipFilePath);
+        let archive = archiver.create("zip", {});
+
+        zipStream.on("close", function() {
+            resolve(zipFileName);
+        });
+        
+        archive.on("error", (err: any) => {
+            reject(err);
+        });
+        
+        archive.pipe(zipStream);
+
+        for (let fileName of filesToZip) {
+            let fileNameWithoutTimestamp = fileName.replace(/[0-9]/g, "");
+            let fn = config.get("save_path") + fileName;
+            archive.append(fs.createReadStream(fn), { name: fileNameWithoutTimestamp });
+            fs.unlink(fn, (err: any) => {
+                if (err) throw err;
+            });
+            
+        }
+        
+        archive.finalize();        
+                
+                
+    });
+}

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // the csv headers are not the same as the db column names so we map them here
 function renameHeaders(sheetName, headerString) {
     let rows = headerString.split("\n");
@@ -157,7 +158,9 @@ let sheetMappings = {
         "naturalist_skill_level": "Naturalist_Skill_Level",
         "participate_as_part_of_job": "Participation_as_Part_of_Job",
         "type_of_job": "Type_of_Job",
-        "job_comments": "Job_Comments"
+        "job_comments": "Job_Comments",
+        "lpl_certified": "LPL_Certified",
+        "lpl_certified_date": "LPL_Certified_Date"
     },
     "station": {
         "site_id": "Site_ID",

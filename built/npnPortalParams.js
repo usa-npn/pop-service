@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function getNpnPortalParams(req) {
     let params = {
         request_src: "dot_service",

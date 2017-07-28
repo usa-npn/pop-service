@@ -1,5 +1,5 @@
-import { createSearchParametersCsv, createCsv } from "./csvBuilders";
-import { createZip } from "./zipBuilder";
+import { createSearchParametersCsv, createCsv, createCitationURLCsv } from "./csvBuilders";
+import { createZip, zipGeoserverData } from "./zipBuilder";
 import { getNpnPortalParams } from "./npnPortalParams";
 import * as express from "express";
 import * as moment from "moment";
@@ -189,6 +189,126 @@ async function getZippedData(req: any) {
         return {download_path: "error"};
     }
 }
+
+
+function getResource(url : string, prefix : string, extension: string, requestTimestamp : number){
+    return new Promise<string>( (resolve, reject) => {
+        let fileName = prefix + requestTimestamp + "." + extension;
+        let filePath = config.get("save_path") + fileName;
+        let file = fs.createWriteStream(filePath);
+        url = url.replace('http', 'https');
+        
+        https.get(url, (metaResponse: any) => {
+            metaResponse.pipe(file);
+
+            metaResponse.on('end', () => {
+               resolve(fileName); 
+            });
+        });   
+    });
+}
+
+function resolveResourceExtension(mime : string){
+    let ext = "png"
+    switch(mime){
+        case "image/png":
+            ext = "png";
+            break;
+        case "application/pdf":
+            ext = "pdf";
+            break;
+        case "application/atom+xml":
+        case "application/rss+xml":
+        case "application/gml+xml":
+            ext = "xml";
+            break;
+        case "application/vnd.google-earth.kml+xml":
+            ext = "kml";
+            break;
+        case "application/vnd.google-earth.kmz":
+            ext = "kmz";
+            break;
+        case "image/geotiff":
+        case "image/geotiff8":
+        case "image/tiff":
+        case "image/tiff8":
+        case "geotiff":
+        case "tiff":
+            ext = "tif";
+            break;
+        case "image/gif":
+            ext = "gif";
+            break;
+        case "image/jpeg":
+            ext = "jpg";
+            break;
+        case "ArcGrid":
+            ext = "asc";
+            break;
+        case "ArcGrid-GZIP":
+            ext = "gz";
+            break;
+        case "application/x-netcdf":
+            ext = "nc";
+            break;
+        case "text/plain":
+            ext = "txt";
+            break;
+        default:
+            ext = "png";
+            
+    }
+    
+    return ext;
+    
+}
+
+function validateInput(req : any){
+
+    let regex = new RegExp("^https?:\/\/[a-zA-Z-]+\.usanpn\.org\/[a-zA-Z0-9\(\)\+\"-].+", 'i');    
+    return regex.test(req.body.resource_url) && 
+    //regex.test(req.body.citation_url) && 
+    regex.test(req.body.metadata_url);
+
+}
+
+
+async function getCitationData(req: any) {
+    
+    let valid = validateInput(req);
+
+    if(valid){
+    
+        let requestTimestamp = Date.now();    
+        let citation = createCitationURLCsv(req.body.citation_url, req.body.layer_title, req.body.doi, req.body.range, requestTimestamp);
+        let ext = resolveResourceExtension(req.body.mime);    
+        let dataPromise = getResource(req.body.resource_url, "data", ext, requestTimestamp);
+        let metadataPromise = getResource(req.body.metadata_url, "metadata", "xml", requestTimestamp);
+        let zipFile : string;
+        zipFile = await Promise.all([dataPromise, metadataPromise, citation]).then(values => {
+            return zipGeoserverData(values,requestTimestamp);
+        });
+
+        return zipFile;
+    }else{
+        return null;
+    }
+    
+
+}
+
+
+
+app.post("/grb/package", (req, res) => {
+    
+    let zipName = getCitationData(req).then( (zip) => {
+        res.setHeader("Content-Type", "application/json");
+        zip = config.get("server_path") + zip;
+        res.send(JSON.stringify({download_path: zip}));
+    });
+    
+
+});
 
 app.post("/pop/download", (req, res) => {
     console.log("in /dot/download");

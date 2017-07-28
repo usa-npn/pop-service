@@ -2,11 +2,12 @@
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator.throw(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
         function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments)).next());
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const csvBuilders_1 = require("./csvBuilders");
 const zipBuilder_1 = require("./zipBuilder");
 const npnPortalParams_1 = require("./npnPortalParams");
@@ -37,18 +38,18 @@ let app = express();
 // allows us to consume json from post requests
 app.use(bodyParser.json());
 // create a write stream (in append mode) and set up a log to record requests
-let accessLogStream = fs.createWriteStream(path.join(config.get("logs_path"), "access.log"), { flags: "a" });
+let accessLogStream = fs.createWriteStream(path.join(config.get("logs_path").toString(), "access.log"), { flags: "a" });
 app.use(morgan("combined", { stream: accessLogStream }));
 let log = bunyan.createLogger({
     name: "dot_service",
     streams: [
         {
             level: "info",
-            path: path.join(config.get("logs_path"), "info.log")
+            path: path.join(config.get("logs_path").toString(), "info.log")
         },
         {
             level: "error",
-            path: path.join(config.get("logs_path"), "error.log")
+            path: path.join(config.get("logs_path").toString(), "error.log")
         }
     ]
 });
@@ -181,6 +182,104 @@ function getZippedData(req) {
         }
     });
 }
+function getResource(url, prefix, extension, requestTimestamp) {
+    return new Promise((resolve, reject) => {
+        let fileName = prefix + requestTimestamp + "." + extension;
+        let filePath = config.get("save_path") + fileName;
+        let file = fs.createWriteStream(filePath);
+        url = url.replace('http', 'https');
+        https.get(url, (metaResponse) => {
+            metaResponse.pipe(file);
+            metaResponse.on('end', () => {
+                resolve(fileName);
+            });
+        });
+    });
+}
+function resolveResourceExtension(mime) {
+    let ext = "png";
+    switch (mime) {
+        case "image/png":
+            ext = "png";
+            break;
+        case "application/pdf":
+            ext = "pdf";
+            break;
+        case "application/atom+xml":
+        case "application/rss+xml":
+        case "application/gml+xml":
+            ext = "xml";
+            break;
+        case "application/vnd.google-earth.kml+xml":
+            ext = "kml";
+            break;
+        case "application/vnd.google-earth.kmz":
+            ext = "kmz";
+            break;
+        case "image/geotiff":
+        case "image/geotiff8":
+        case "image/tiff":
+        case "image/tiff8":
+        case "geotiff":
+        case "tiff":
+            ext = "tif";
+            break;
+        case "image/gif":
+            ext = "gif";
+            break;
+        case "image/jpeg":
+            ext = "jpg";
+            break;
+        case "ArcGrid":
+            ext = "asc";
+            break;
+        case "ArcGrid-GZIP":
+            ext = "gz";
+            break;
+        case "application/x-netcdf":
+            ext = "nc";
+            break;
+        case "text/plain":
+            ext = "txt";
+            break;
+        default:
+            ext = "png";
+    }
+    return ext;
+}
+function validateInput(req) {
+    let regex = new RegExp("^https?:\/\/[a-zA-Z-]+\.usanpn\.org\/[a-zA-Z0-9\(\)\+\"-].+", 'i');
+    return regex.test(req.body.resource_url) &&
+        //regex.test(req.body.citation_url) && 
+        regex.test(req.body.metadata_url);
+}
+function getCitationData(req) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let valid = validateInput(req);
+        if (valid) {
+            let requestTimestamp = Date.now();
+            let citation = csvBuilders_1.createCitationURLCsv(req.body.citation_url, req.body.layer_title, req.body.doi, req.body.range, requestTimestamp);
+            let ext = resolveResourceExtension(req.body.mime);
+            let dataPromise = getResource(req.body.resource_url, "data", ext, requestTimestamp);
+            let metadataPromise = getResource(req.body.metadata_url, "metadata", "xml", requestTimestamp);
+            let zipFile;
+            zipFile = yield Promise.all([dataPromise, metadataPromise, citation]).then(values => {
+                return zipBuilder_1.zipGeoserverData(values, requestTimestamp);
+            });
+            return zipFile;
+        }
+        else {
+            return null;
+        }
+    });
+}
+app.post("/grb/package", (req, res) => {
+    let zipName = getCitationData(req).then((zip) => {
+        res.setHeader("Content-Type", "application/json");
+        zip = config.get("server_path") + zip;
+        res.send(JSON.stringify({ download_path: zip }));
+    });
+});
 app.post("/pop/download", (req, res) => {
     console.log("in /dot/download");
     getZippedData(req)

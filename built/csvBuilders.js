@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const npnPortalParams_1 = require("./npnPortalParams");
 const headerMappings_1 = require("./headerMappings");
 const request = require("request");
@@ -6,7 +7,6 @@ const config = require("config");
 const fs = require("graceful-fs");
 const csvStringify = require("csv-stringify");
 let JSONStream = require("JSONStream");
-// import * as JSONStream from 'jsonstream';
 let stream = require("stream");
 function createSearchParametersCsv(params, requestTimestamp) {
     return new Promise((resolve, reject) => {
@@ -38,17 +38,114 @@ function createSearchParametersCsv(params, requestTimestamp) {
     });
 }
 exports.createSearchParametersCsv = createSearchParametersCsv;
+function createCitationURLCsv(url, title, doi, range, requestTimestamp) {
+    return new Promise((resolve, reject) => {
+        let citationCsvFileName = "citation" + requestTimestamp.toString() + ".csv";
+        let fullPath = config.get("save_path") + citationCsvFileName;
+        let currentDate = new Date(requestTimestamp);
+        let citationString = "USA National Phenology Network. ";
+        citationString += "2017. ";
+        citationString += title + ". ";
+        citationString += "Region: " + range + ". ";
+        citationString += url + " . ";
+        citationString += "USA-NPN, Tucson, Arizona, USA. ";
+        citationString += "Data set accessed " + currentDate.getFullYear() + "-" + (currentDate.getMonth() + 1) + "-" + currentDate.getDate() + ". ";
+        citationString += doi;
+        let inputArray = [[citationString, ""]];
+        csvStringify(inputArray, (err, output) => {
+            fs.appendFile(fullPath, output, function (err) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(citationCsvFileName);
+                }
+            });
+        });
+    });
+}
+exports.createCitationURLCsv = createCitationURLCsv;
 function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv, writeHeader, sites, individuals, observers, groups) {
     return new Promise((resolve, reject) => {
         try {
             console.log("Building csv: " + csvFileName);
             let csvPath = config.get("save_path") + csvFileName;
-            fs.writeFile(csvPath, "", { "flag": "a" });
+            fs.writeFileSync(csvPath, "", { "flag": "a" });
             // used to know when to write csv header row
             let firstRow = writeHeader;
             let headerWrote = false;
             // don't want npnportal to change things like < to &amp;&lt;
             params.noHtmlEncoding = true;
+            // used for debugging
+            let lastRetrievedChunk = "";
+            let chunkCount = 0;
+            let jsonObjectCount = 0;
+            // converts incoming chunked json string into json objects
+            let jsonParser = JSONStream.parse("*");
+            // buffers incoming data from npn_portal, need this because pausing the response stream causes data loss
+            let bufferStream = new stream.Transform();
+            bufferStream._transform = function (chunk, encoding, callback) {
+                this.push(chunk);
+                callback();
+            };
+            // converts json objects to csv rows
+            let csvStream = new stream.Transform({ objectMode: true });
+            csvStream._transform = function (chunk, encoding, callback) {
+                // saves sites, individuals, observers, groups, etc from incoming objects into arrays for use in other reports
+                jsonObjectCount += 1;
+                if (observationsCsv) {
+                    // save some info to help produce (filter results) in other generated csv files
+                    sites.add(chunk.site_id);
+                    individuals.add(chunk.individual_id);
+                    let observedByPersonIds = chunk.observedby_person_id;
+                    if (observedByPersonIds) {
+                        if (observedByPersonIds.split) {
+                            for (let observerId of observedByPersonIds.split(",")) {
+                                observers.add(observerId.replace(/'/g, ""));
+                            }
+                        }
+                        else
+                            observers.add(observedByPersonIds);
+                    }
+                    groups.add(chunk.observation_group_id);
+                }
+                csvStringify([chunk], { header: firstRow }, (err, data) => {
+                    if (err) {
+                        console.log("csvStringify Error" + err);
+                        reject(err);
+                    }
+                    if (firstRow) {
+                        data = headerMappings_1.renameHeaders(sheetName, data);
+                        headerWrote = true;
+                        firstRow = false;
+                    }
+                    this.push(data);
+                    callback();
+                });
+            };
+            // writes the csv rows to disk
+            let writeStream = fs.createWriteStream(csvPath, { flags: "a" });
+            // all the stream events we listen for
+            bufferStream.on("error", (err) => {
+                console.log("bufferStream error: " + err);
+                reject(err);
+            });
+            jsonParser.on("error", (err) => {
+                console.log("jsonParser error: " + err.stack);
+                reject(err.stack + " lastchunk = " + lastRetrievedChunk);
+            });
+            writeStream.on("error", (err) => {
+                console.log("objectStream error: " + err);
+                reject(err);
+            });
+            writeStream.on("finish", () => {
+                console.log("jsonObjectCount: " + jsonObjectCount);
+                console.log("finish event called: resolving");
+                resolve([csvFileName, headerWrote]);
+            });
+            // compose all the streams together
+            bufferStream.pipe(jsonParser).pipe(csvStream).pipe(writeStream);
+            // make the npn_portal request
             let postUrl = config.get("npn_portal_path") + serviceCall;
             console.log("Making request to: " + postUrl);
             console.log("post params: " + JSON.stringify(params));
@@ -58,61 +155,31 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                 form: params
             }).on("error", function (err) {
                 reject(err);
-            }).on("response", (data) => {
-                // Incoming chunks are json objects, we pipe them through a json parser then to objectStream
-                // Object stream converts the json to csv and writes the result to a csv file
-                // TODO: highWaterMark specifies how many objects to get at a time. Tweak this later to improve speed?
-                let objectStream = new stream.Writable({ highWaterMark: 1, objectMode: true });
-                objectStream._write = (chunk, encoding, callback) => {
-                    if (observationsCsv) {
-                        // save some info to help produce (filter results) in other generated csv files
-                        sites.add(chunk.site_id);
-                        individuals.add(chunk.individual_id);
-                        let observedByPersonIds = chunk.observedby_person_id;
-                        if (observedByPersonIds) {
-                            if (observedByPersonIds.split) {
-                                for (let observerId of observedByPersonIds.split(",")) {
-                                    observers.add(observerId.replace(/'/g, ""));
-                                }
-                            }
-                            else
-                                observers.add(observedByPersonIds);
-                        }
-                        groups.add(chunk.observation_group_id);
-                    }
-                    csvStringify([chunk], { header: firstRow }, (err, data) => {
-                        if (firstRow) {
-                            data = headerMappings_1.renameHeaders(sheetName, data);
-                            headerWrote = true;
-                            firstRow = false;
-                        }
-                        fs.appendFileSync(csvPath, data);
-                        callback();
-                    });
-                };
-                // save the last chunk so that we can log it in case of parsing error
-                let lastRetrievedChunk = "";
-                data.on("data", (dd) => {
-                    lastRetrievedChunk = dd.toString();
-                    // console.log('hello' + dd);
-                });
-                let jsonParser = JSONStream.parse("*");
-                jsonParser.on("error", (err) => {
-                    reject(err.stack + " lastchunk = " + lastRetrievedChunk);
-                });
-                data.pipe(jsonParser).pipe(objectStream);
-                data.on("close", () => {
+            }).on("response", function (res) {
+                console.log("beginning to receive data from npn_portal");
+                res.on("close", () => {
+                    console.log("The connection was closed before the response was sent!");
                     reject("The connection was closed before the response was sent!");
                 });
-                data.on("end", () => {
-                    console.log("Finished getting data from npn_portal");
+                res.on("end", () => {
+                    console.log("finished receiving data from npn_portal");
+                    console.log("chunks received: " + chunkCount);
+                    console.log("last chunk received: ");
+                    console.log(lastRetrievedChunk);
+                    // signals that no more data will be written to the bufferStream
+                    bufferStream.end();
                 });
-                objectStream.on("finish", () => {
-                    resolve([csvFileName, headerWrote]);
+                // by listening to on data, we start a push stream (like a water tap: once you open it, it keeps gushing water.)
+                res.on("data", function (chunk) {
+                    chunkCount += 1;
+                    // here we push the data onto the bufferStream as it comes in
+                    // from there we can use piping to pull the data through each stream as needed
+                    bufferStream.write(chunk);
                 });
             });
         }
         catch (error) {
+            console.log("caught an error: " + error);
             reject(error);
         }
     });

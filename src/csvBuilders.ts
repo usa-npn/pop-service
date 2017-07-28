@@ -36,6 +36,37 @@ export function createSearchParametersCsv(params: NpnPortalParams, requestTimest
   });
 }
 
+export function createCitationURLCsv(url : string, title: string, doi : string, range: string, requestTimestamp: number){
+    return new Promise<string>((resolve, reject) => {
+        let citationCsvFileName = "citation" + requestTimestamp.toString() + ".csv";
+        let fullPath = config.get("save_path") + citationCsvFileName;
+        
+        let currentDate = new Date(requestTimestamp);
+        
+        let citationString = "USA National Phenology Network. ";
+        citationString += "2017. ";
+        citationString += title + ". ";
+        citationString += "Region: " + range + ". ";
+        citationString += url + " . ";
+        citationString += "USA-NPN, Tucson, Arizona, USA. ";
+        citationString += "Data set accessed " + currentDate.getFullYear() + "-" + (currentDate.getMonth()+1) + "-" + currentDate.getDate() + ". ";
+        citationString += doi;
+        
+        
+        let inputArray: string[][] = [[citationString, ""]];
+        
+        csvStringify(inputArray, (err: any, output: any) => {
+            fs.appendFile(fullPath, output, function(err: any) {
+                if(err){
+                    reject(err);
+                }else{
+                    resolve(citationCsvFileName);
+                }
+            })
+        })
+    });
+}
+
 
 export function createCsv(serviceCall: string, params: any, csvFileName: string, sheetName: string, observationsCsv: boolean, writeHeader: boolean,
                           sites: Set<number>, individuals: Set<number>, observers: Set<number>, groups: Set<number>) {
