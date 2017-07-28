@@ -26,13 +26,6 @@ npm install
 ```
 The command installs all dependencies listed in the package.json file into a folder called node_modules.
 
-Next install the typings files needed for typescript
-
-```
-cd pop-service
-typings install
-```
-
 Create config files in the pop-service/config/ directory using the readme in that same directory as a guide. For example:
 
 ```
