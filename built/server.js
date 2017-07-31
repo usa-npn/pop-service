@@ -249,8 +249,12 @@ function resolveResourceExtension(mime) {
 }
 function validateInput(req) {
     let regex = new RegExp("^https?:\/\/[a-zA-Z-]+\.usanpn\.org\/[a-zA-Z0-9\(\)\+\"-].+", 'i');
+    console.log("Validation:");
+    console.log(regex.test(req.body.resource_url));
+    console.log(regex.test(req.body.citation_url));
+    console.log(req.body.citation_url);
     return regex.test(req.body.resource_url) &&
-        //regex.test(req.body.citation_url) && 
+        regex.test(req.body.citation_url) &&
         regex.test(req.body.metadata_url);
 }
 function getCitationData(req) {
