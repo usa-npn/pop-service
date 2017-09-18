@@ -79,12 +79,21 @@ function convertSetToArray(set: Set<any>) {
 
 
 function getObservationsServiceCall(reportType: string): string {
-    if (reportType === "Status and Intensity")
+    if (reportType === "Status and Intensity"){
         return "observations/getObservations.json";
-    if (reportType === "Individual Phenometrics")
+    }
+    
+    if (reportType === "Individual Phenometrics"){
         return "observations/getSummarizedData.json";
-    if (reportType === "Site Phenometrics")
+    }
+    
+    if (reportType === "Site Phenometrics"){
         return "observations/getSiteLevelData.json";
+    }
+    
+    if(reportType === "Magnitude Phenometrics"){
+        return "observations/getMagnitudeData.json";
+    }
 }
 
 async function getZippedData(req: any) {
@@ -111,12 +120,16 @@ async function getZippedData(req: any) {
             let writeHeader: boolean = true;
             let headerWrote: boolean = false;
             let sheetName: string;
+            
             if (params.downloadType === "Individual Phenometrics") {
                 sheetName = "individual_phenometrics_data";
             }
-            else {
+            else if(params.downloadType === "Magnitude Phenometrics"){
+                sheetName = "magnitude_phenometrics_data";
+            }else{
                 sheetName = "site_phenometrics_data";
             }
+            
             while (tempEndDate.isBefore(endDate)) {
                 params.start_date = tempStartDate.format("YYYY-MM-DD");
                 params.end_date = tempEndDate.format("YYYY-MM-DD");
@@ -132,9 +145,10 @@ async function getZippedData(req: any) {
             params.end_date = endDate.format("YYYY-MM-DD");
 
             csvFileNames.push((await createCsv(getObservationsServiceCall(params.downloadType), params, sheetName + requestTimestamp.toString() + ".csv", "observation", true, writeHeader, sites, individuals, observers, groups))[0]);
-        }
-        else
+            
+        }else{
             csvFileNames.push((await createCsv(getObservationsServiceCall(params.downloadType), params, "status_intensity_observation_data" + requestTimestamp.toString() + ".csv", "observation", true, true, sites, individuals, observers, groups))[0]);
+        }
         if (params.ancillary_data) {
             if (params.ancillary_data.indexOf("Sites") !== -1)
                 csvFileNames.push((await createCsv("stations/getStationDetails.json", { "ids": convertSetToArray(sites).toString(), "no_live": true}, "ancillary_site_data" + requestTimestamp.toString() + ".csv", "station", false, true, sites, individuals, observers, groups))[0]);
@@ -154,6 +168,7 @@ async function getZippedData(req: any) {
                 csvFileNames.push((await createCsv("phenophases/getPhenophaseDefinitionDetails.json", {}, "ancillary_phenophase_definition_data" + requestTimestamp.toString() + ".csv", "phenophase_definition", false, true, sites, individuals, observers, groups))[0]);
             }
         }
+        
         let zipFileName = await createZip(params.downloadType, csvFileNames, requestTimestamp);
         // remove csv files that were just zipped
         for (let csvFile of csvFileNames) {

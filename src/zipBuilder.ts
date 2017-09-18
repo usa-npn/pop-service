@@ -25,6 +25,7 @@ export function createZip(downloadType: string, filesToZip: string[], requestTim
             let fileNameWithoutTimestamp = fileName.replace(/[0-9]/g, "");
             archive.append(fs.createReadStream(config.get("save_path") + fileName), { name: fileNameWithoutTimestamp });
         }
+        
         if (downloadType === "Status and Intensity" && fs.existsSync(config.get("metadata_path") + "status_intensity_datafield_descriptions.xlsx")) {
             archive.append(fs.createReadStream(config.get("metadata_path") + "status_intensity_datafield_descriptions.xlsx"), { name: "status_intensity_datafield_descriptions.xlsx" });
         }
@@ -33,7 +34,10 @@ export function createZip(downloadType: string, filesToZip: string[], requestTim
         }
         else if (downloadType === "Individual Phenometrics" && fs.existsSync(config.get("metadata_path") + "individual_phenometrics_datafield_descriptions.xlsx")) {
             archive.append(fs.createReadStream(config.get("metadata_path") + "individual_phenometrics_datafield_descriptions.xlsx"), { name: "individual_phenometrics_datafield_descriptions.xlsx" });
+        }else if (downloadType === "Magnitude Phenometrics" && fs.existsSync(config.get("metadata_path") + "magnitude_phenometrics_datafield_descriptions.xlsx")) {
+            archive.append(fs.createReadStream(config.get("metadata_path") + "magnitude_phenometrics_datafield_descriptions.xlsx"), { name: "magnitude_phenometrics_datafield_descriptions.xlsx" });
         }
+        
         if (filesToZip.length > 2 && fs.existsSync(config.get("metadata_path") + "ancillary_datafield_descriptions.xlsx")) {
             archive.append(fs.createReadStream(config.get("metadata_path") + "ancillary_datafield_descriptions.xlsx"), { name: "ancillary_datafield_descriptions.xlsx" });
         }
