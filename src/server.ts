@@ -211,7 +211,6 @@ function getResource(url : string, prefix : string, extension: string, requestTi
         let fileName = prefix + requestTimestamp + "." + extension;
         let filePath = config.get("save_path") + fileName;
         let file = fs.createWriteStream(filePath);
-        url = url.replace('http', 'https');
         
         https.get(url, (metaResponse: any) => {
             metaResponse.pipe(file);
