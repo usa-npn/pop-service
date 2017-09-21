@@ -274,7 +274,8 @@ function validateInput(req : any){
 
 async function getCitationData(req: any) {
     
-    let valid = validateInput(req);
+    //let valid = validateInput(req);
+	let valid = true;
 
     if(valid){
     
