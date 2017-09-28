@@ -199,7 +199,7 @@ function getResource(url : string, prefix : string, extension: string, requestTi
 
         log.info(url);
         
-        http.get(url, (metaResponse: any) => {
+        https.get(url, (metaResponse: any) => {
             metaResponse.pipe(file);
 
             metaResponse.on('end', () => {
