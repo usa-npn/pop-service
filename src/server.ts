@@ -126,10 +126,11 @@ async function getZippedData(req: any) {
             }
             else if(params.downloadType === "Magnitude Phenometrics"){
                 sheetName = "magnitude_phenometrics_data";
+                tempEndDate.subtract(1, "days");
             }else{
                 sheetName = "site_phenometrics_data";
             }
-            
+
             while (tempEndDate.isBefore(endDate)) {
                 params.start_date = tempStartDate.format("YYYY-MM-DD");
                 params.end_date = tempEndDate.format("YYYY-MM-DD");
