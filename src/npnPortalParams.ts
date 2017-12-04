@@ -4,6 +4,7 @@ export interface NpnPortalParams {
     start_date: string;
     end_date: string;
     num_days_quality_filter: number;
+    frequency: number;
     state: string[];
     bottom_left_x1: number;
     bottom_left_y1: number;
@@ -18,6 +19,7 @@ export interface NpnPortalParams {
     additionalFieldDisplay: string[];
     qualityFlags: string;
     network: string[];
+    network_id : number;
     integrated_datasets: string[];
     dataset_ids: string[];
     ancillary_data: string[];
@@ -32,6 +34,7 @@ export function getNpnPortalParams(req: any): NpnPortalParams {
         start_date: req.body.startDate,
         end_date: req.body.endDate,
         num_days_quality_filter: req.body.num_days_quality_filter,
+        frequency: req.body.frequency,
         state: req.body.state,
         bottom_left_x1: req.body.bottom_left_x1,
         bottom_left_y1: req.body.bottom_left_y1,
@@ -46,11 +49,13 @@ export function getNpnPortalParams(req: any): NpnPortalParams {
         additionalFieldDisplay: req.body.additionalFieldsDisplay,
         qualityFlags: req.body.qualityFlags,
         network: req.body.partnerGroups,
+        network_id: req.body.network_ids,
         integrated_datasets: req.body.integrated_datasets,
         dataset_ids: req.body.dataset_ids,
         ancillary_data: req.body.ancillary_data,
         station_id: req.body.stations
     };
+
     return params;
 }
 
@@ -64,6 +69,7 @@ export var paramNamesBeautified: ParamNamesBeautified = {
     start_date: "Start Date:",
     end_date: "End Date:",
     num_days_quality_filter: "Data Precision Filter:",
+    frequency: "Period of Interest:",
     state: "States:",
     bottom_left_constraint: "Coordinates, Bottom-Left Constraint:",
     upper_right_constraint: "Coordinates, Upper-Right Constraint:",
