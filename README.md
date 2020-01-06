@@ -66,22 +66,22 @@ node pop-service/built/server.js
 This server is currently deployed using ubuntu upstart which autostarts the server on boot and provides the following commands.
 
 ```
-sudo service dot-service stop
-sudo service dot-service start
-sudo service dot-service restart
-sudo service dot-service status
+sudo service pop-service stop
+sudo service pop-service start
+sudo service pop-service restart
+sudo service pop-service status
 ```
 
-The service is located in /etc/init/dot-service.conf
+The service is located in /etc/init/pop-service.conf
 
 A common deployment will look like this
 ```
-cd dot-service
-sudo service dot-service stop
+cd pop-service
+sudo service pop-service stop
 sudo git pull
 sudo npm install - this is only needed if the commit added a new npm package
 sudo tsc
-sudo service dot-service start
+sudo service pop-service start
 ```
 
 ## Related Projects
