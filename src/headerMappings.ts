@@ -310,6 +310,7 @@ let sheetMappings: SheetMappings = {
         "animal_search_method" : "Animal_Search_Method",
         "snow_on_ground" : "Snow_on_Ground",
         "percent_snow_cover" : "Percent_Snow_Cover",
-        "snow_in_tree_canopy" : "Snow_in_Tree_Canopy"
+        "snow_in_tree_canopy" : "Snow_in_Tree_Canopy",
+        "site_visit_comments" : "Site_Visit_Comments"
     }
 };
