@@ -421,8 +421,13 @@ function getServer(): any {
     if (config.get("protocol") === "https" ) {
         let certificate = fs.readFileSync(config.get("ssl_cert") as string);
         let privateKey = fs.readFileSync(config.get("ssl_key") as string);
+        let chain = fs.readFileSync(config.get("ssl_chain") as string);
         console.log("creating https server");
-        let server = https.createServer({key: privateKey, cert: certificate}, app);
+        let server = https.createServer({
+            key: privateKey, 
+            cert: certificate,
+            ca: chain
+        }, app);
         server.setTimeout(0);
         return server;
     }
