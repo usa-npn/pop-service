@@ -71,7 +71,6 @@ var sheetMappings = {
         "itis_number": "ITIS_Number",
         "growth_habit": "Growth_Habit",
         "lifecycle_duration": "Lifecycle_Duration",
-        "number_of_observers_searching_for_animals": "Number_of_Observers_Searching_for_Animals",
         "plant_nickname": "Plant_Nickname",
         "patch": "Patch",
         "protocol_id": "Protocol_ID",
@@ -271,6 +270,7 @@ var sheetMappings = {
         "animal_search_method": "Animal_Search_Method",
         "snow_on_ground": "Snow_on_Ground",
         "percent_snow_cover": "Percent_Snow_Cover",
+        "num_observers_searching": "Num_Observers_Searching",
         "snow_in_tree_canopy": "Snow_in_Tree_Canopy"
     }
 };
