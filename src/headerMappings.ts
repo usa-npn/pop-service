@@ -75,10 +75,10 @@ let sheetMappings: SheetMappings = {
         "kingdom": "Kingdom",
         "species_functional_type": "Species_Functional_Type",
         "species_category": "Species_Category",
+        "lifecycle_duration": "Lifecycle_Duration",
+        "growth_habit": "Growth_Habit",
         "usda_plants_symbol": "USDA_PLANTS_Symbol",
         "itis_number": "ITIS_Number",
-        "growth_habit": "Growth_Habit",
-        "lifecycle_duration": "Lifecycle_Duration",
         "plant_nickname": "Plant_Nickname",
         "patch": "Patch",
         "protocol_id": "Protocol_ID",
@@ -309,11 +309,11 @@ let sheetMappings: SheetMappings = {
         "travel_time" : "Travel_Time",
         "total_observation_time" : "Total_Observation_Time",
         "animal_search_time" : "Animal_Search_Time",
+        "num_observers_searching": "Num_Observers_Searching",
         "animal_search_method" : "Animal_Search_Method",
         "snow_on_ground" : "Snow_on_Ground",
         "percent_snow_cover" : "Percent_Snow_Cover",
         "snow_in_tree_canopy" : "Snow_in_Tree_Canopy",
-        "num_observers_searching": "Num_Observers_Searching",
         "site_visit_comments" : "Site_Visit_Comments"
     }
 };
