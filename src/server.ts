@@ -30,7 +30,8 @@ let pool      =    mysql.createPool({
 let app = express();
 
 // allows us to consume json from post requests
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '5mb'}));
+app.use(bodyParser.urlencoded({limit: '5mb', extended: true}));
 
 // create a write stream (in append mode) and set up a log to record requests
 let accessLogStream = fs.createWriteStream(path.join(config.get("logs_path").toString(), "access.log"), {flags: "a"});
