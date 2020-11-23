@@ -67,6 +67,8 @@ var sheetMappings = {
         "kingdom": "Kingdom",
         "species_functional_type": "Species_Functional_Type",
         "species_category": "Species_Category",
+        "lifecycle_duration": "Lifecycle_Duration",
+        "growth_habit": "Growth_Habit",
         "usda_plants_symbol": "USDA_PLANTS_Symbol",
         "itis_number": "ITIS_Number",
         "plant_nickname": "Plant_Nickname",
@@ -268,6 +270,7 @@ var sheetMappings = {
         "animal_search_method": "Animal_Search_Method",
         "snow_on_ground": "Snow_on_Ground",
         "percent_snow_cover": "Percent_Snow_Cover",
+        "num_observers_searching": "Num_Observers_Searching",
         "snow_in_tree_canopy": "Snow_in_Tree_Canopy"
     }
 };
