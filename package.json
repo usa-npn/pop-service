@@ -23,6 +23,7 @@
     "body-parser": "latest",
     "bunyan": "latest",
     "config": "latest",
+    "cors": "^2.8.5",
     "csv-stringify": "^1.0.4",
     "express": "latest",
     "graceful-fs": "latest",
