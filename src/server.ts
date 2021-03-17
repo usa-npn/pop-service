@@ -349,9 +349,8 @@ app.get("/pop/downloadstatus", (req, res) => {
     console.log("in /dot/downloadstatus");
     try {
         let zipFileName = req.query.zipFileName;
-        let downloadPath = config.get("server_path") + zipFileName;
         let completeStatus = false;
-        if(fs.existsSync(downloadPath)) {
+        if(fs.existsSync(config.get("save_path") + zipFileName)) {
             completeStatus = true;
         }
         return res.send({
