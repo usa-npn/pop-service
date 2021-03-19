@@ -12,8 +12,9 @@ import * as mysql from "mysql";
 import * as config from "config";
 import * as util from "util";
 import * as path from "path";
-//import * as http from "http";  //not using because won't allow server.setTimeout(0);
-//import * as https from "https";
+// import request = require("request");
+// import * as http from 'http';  //not using because won't allow server.setTimeout(0);
+// import * as https from 'https';
 let http = require("http");
 let https = require("https");
 var cors = require('cors');
@@ -100,9 +101,8 @@ function getObservationsServiceCall(reportType: string): string {
     }
 }
 
-async function getZippedData(req: any) {
+async function getZippedData(req: any, requestTimestamp: number) {
     try {
-        let requestTimestamp = Date.now();
         let params = getNpnPortalParams(req);
 
         log.info(params, "Data Request made with these params");
@@ -332,15 +332,37 @@ app.post("/grb/package", (req, res) => {
 
 app.post("/pop/download", (req, res) => {
     console.log("in /dot/download");
-    getZippedData(req)
+    let requestTimestamp = Date.now();
+    let zipName = "datasheet_" + requestTimestamp.toString() + ".zip";
+    res.setHeader("Content-Type", "application/json");
+    res.send({zip_file_name: zipName});
+    getZippedData(req, requestTimestamp)
       .then(zipFile => {
-          res.setHeader("Content-Type", "application/json");
-          res.send(zipFile);
+        log.info(zipFile + " complete");
       })
       .catch(err => {
-          console.error(err);
-          res.send({download_path: "error"});
+          log.error("error creating " + zipName);
+          log.error(err);
       });
+});
+
+app.get("/pop/downloadstatus", (req, res) => {
+    console.log("in /dot/downloadstatus");
+    try {
+        let zipFileName = req.query.zipFileName;
+        let completeStatus = false;
+        if(fs.existsSync(config.get("save_path") + zipFileName)) {
+            completeStatus = true;
+        }
+        return res.send({
+                file_complete: completeStatus,
+                download_path: config.get("server_path") + zipFileName
+            });
+    } catch (error) {
+        log.error(error, "Could not check zip file status.");
+        console.error(error);
+        return res.send({file_complete: false});
+    }
 });
 
 app.get("/pop/search", (req, res) => {
