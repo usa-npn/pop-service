@@ -329,15 +329,19 @@ app.post("/grb/package", (req, res) => {
 
 });
 
+let popRequestStatus = new Map();
+
 app.post("/pop/download", (req, res) => {
     console.log("in /dot/download");
     let requestTimestamp = Date.now();
     let zipName = "datasheet_" + requestTimestamp.toString() + ".zip";
+    popRequestStatus.set(zipName, false);
     res.setHeader("Content-Type", "application/json");
     res.send({zip_file_name: zipName});
     getZippedData(req, requestTimestamp)
       .then(zipFile => {
         log.info(zipFile + " complete");
+        popRequestStatus.set(zipName, true);
       })
       .catch(err => {
           log.error("error creating " + zipName);
@@ -350,7 +354,8 @@ app.get("/pop/downloadstatus", (req, res) => {
     try {
         let zipFileName = req.query.zipFileName;
         let completeStatus = false;
-        if(fs.existsSync(config.get("save_path") + zipFileName)) {
+        if(popRequestStatus.get(zipFileName) 
+            && fs.existsSync(config.get("save_path") + zipFileName)) {
             completeStatus = true;
         }
         return res.send({
