@@ -332,7 +332,7 @@ app.post("/grb/package", (req, res) => {
 
 let popRequestStatus = new Map();
 
-app.post("/pop/download", (req, res) => {
+app.post("/download", (req, res) => {
     console.log("in /dot/download");
     let requestTimestamp = Date.now();
     let zipName = "datasheet_" + requestTimestamp.toString() + ".zip";
@@ -350,7 +350,7 @@ app.post("/pop/download", (req, res) => {
       });
 });
 
-app.get("/pop/downloadstatus", (req, res) => {
+app.get("/downloadstatus", (req, res) => {
     console.log("in /dot/downloadstatus");
     try {
         let zipFileName = req.query.zipFileName;
@@ -370,7 +370,7 @@ app.get("/pop/downloadstatus", (req, res) => {
     }
 });
 
-app.get("/pop/search", (req, res) => {
+app.get("/search", (req, res) => {
 
     console.log("get /dot/search");
     let hashedJson = req.query.searchId;
@@ -394,7 +394,7 @@ app.get("/pop/search", (req, res) => {
     });
 });
 
-app.post("/pop/search", (req, res) => {
+app.post("/search", (req, res) => {
     console.log("post /dot/search");
     // CREATE TABLE usanpn2.Pop_Search (Search_ID INT(11) NOT NULL AUTO_INCREMENT, Hash TEXT, Json TEXT, Save_Count INT(11), PRIMARY KEY(Search_ID));
     let foundHash = false;
@@ -435,7 +435,7 @@ app.post("/pop/search", (req, res) => {
     });
 });
 
-app.get("/pop/fgdc", (req, res) => {
+app.get("/fgdc", (req, res) => {
     console.log("get /dot/fgdc");
     let filePath = config.get("metadata_path") + "USA-NPN_Phenology_observation_data.xml";
     let file = fs.createWriteStream(filePath);
