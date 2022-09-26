@@ -356,12 +356,12 @@ app.get("/downloadstatus", (req, res) => {
         let zipFileName = req.query.zipFileName;
         let completeStatus = false;
         if(popRequestStatus.get(zipFileName) 
-            && fs.existsSync(config.get("save_path") + zipFileName)) {
+            && fs.existsSync(String(config.get("save_path")) + zipFileName)) {
             completeStatus = true;
         }
         return res.send({
                 file_complete: completeStatus,
-                download_path: config.get("server_path") + zipFileName
+                download_path: String(config.get("server_path")) + zipFileName
             });
     } catch (error) {
         log.error(error, "Could not check zip file status.");
