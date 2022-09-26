@@ -60,11 +60,11 @@ process.on("uncaughtException", (err: any) => {
     console.error(err.stack);
 });
 
-// app.use((req, res, next) => {
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, Keep-Alive");
-//     next();
-// });
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Connection, Keep-Alive");
+    next();
+});
 
 // note: don't remove unused parameter next... things will break
 app.use((err: any, req: any, res: any, next: any) => {
