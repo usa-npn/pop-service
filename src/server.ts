@@ -26,6 +26,9 @@ let pool      =    mysql.createPool({
     user     : config.get("mysql_user") as string,
     password : config.get("mysql_password") as string,
     database : config.get("mysql_database") as string,
+    ssl  : {
+        ca : fs.readFileSync(config.get("cert_path"))
+    },
     debug    :  false
 });
 

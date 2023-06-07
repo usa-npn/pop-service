@@ -44,7 +44,7 @@ export function createCitationURLCsv(url : string, title: string, doi : string, 
         let currentDate = new Date(requestTimestamp);
         
         let citationString = "USA National Phenology Network. ";
-        citationString += "2017. ";
+        citationString += currentDate.getFullYear() + ". ";
         citationString += title + ". ";
         citationString += "Region: " + range + ". ";
         citationString += url + " . ";
@@ -167,8 +167,8 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       }).on("response", function (res) {
         console.log("beginning to receive data from npn_portal");
         res.on("close", () => {
-          //console.log("The connection was closed before the response was sent!");
-          //reject("The connection was closed before the response was sent!");
+          // console.log("The connection was closed before the response was sent!");
+          // reject("The connection was closed before the response was sent!");
           bufferStream.end();
         });
         res.on("end", () => {
