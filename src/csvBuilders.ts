@@ -167,8 +167,9 @@ export function createCsv(serviceCall: string, params: any, csvFileName: string,
       }).on("response", function (res) {
         console.log("beginning to receive data from npn_portal");
         res.on("close", () => {
-          console.log("The connection was closed before the response was sent!");
-          reject("The connection was closed before the response was sent!");
+          //console.log("The connection was closed before the response was sent!");
+          //reject("The connection was closed before the response was sent!");
+          bufferStream.end();
         });
         res.on("end", () => {
           console.log("finished receiving data from npn_portal");
