@@ -94,8 +94,8 @@ function createCsv(serviceCall, params, csvFileName, sheetName, observationsCsv,
                 //save the last chunk so that we can log it in case of parsing error
                 var lastRetrievedChunk = '';
                 data.on('data', function (dd) {
-                    lastRetrievedChunk = dd.toString();
-                    //console.log('hello' + dd);
+                    lastRetrievedChunk += dd.toString();
+                    console.log('hello' + dd);
                 });
                 var jsonParser = JSONStream.parse('*');
                 jsonParser.on('error', function (err) {

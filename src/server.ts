@@ -8,7 +8,7 @@ import * as morgan from "morgan";
 import * as fs from "graceful-fs";
 import * as bodyParser from "body-parser";
 import * as crypto from "crypto";
-import * as mysql from "mysql";
+const mysql = require('mysql2');
 import * as config from "config";
 import * as util from "util";
 import * as path from "path";
@@ -27,7 +27,8 @@ let pool      =    mysql.createPool({
     password : config.get("mysql_password") as string,
     database : config.get("mysql_database") as string,
     ssl  : {
-        ca : fs.readFileSync(config.get("cert_path"))
+        ca : fs.readFileSync(config.get("cert_path")),
+	rejectUnauthorized: false
     },
     debug    :  false
 });

@@ -17,7 +17,7 @@ var morgan = require('morgan');
 var fs = require('graceful-fs');
 var bodyParser = require('body-parser');
 var crypto = require('crypto');
-var mysql = require('mysql');
+var mysql = require('mysql2');
 var config = require('config');
 var util = require('util');
 var path = require('path');
@@ -217,7 +217,7 @@ app.get("/pop/search", function (req, res) {
     });
 });
 app.post("/pop/search", function (req, res) {
-    console.log("post /dot/search");
+    log.info("post /dot/search");
     // CREATE TABLE usanpn2.Pop_Search (Search_ID INT(11) NOT NULL AUTO_INCREMENT, Hash TEXT, Json TEXT, Save_Count INT(11), PRIMARY KEY(Search_ID));
     var foundHash = false;
     var saveCount = 1;
@@ -225,6 +225,7 @@ app.post("/pop/search", function (req, res) {
     var hashedJson = crypto.createHash('md5').update(saveJson).digest('hex');
     pool.getConnection(function (err, connection) {
         if (err) {
+		log.info(err);
             console.error(err);
             res.send(null);
             connection.release();
