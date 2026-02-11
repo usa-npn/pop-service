@@ -32,7 +32,7 @@ export function getNpnPortalParams(req: any): NpnPortalParams {
     let params: NpnPortalParams = {
         request_src: "dot_service",
         downloadType: req.body.downloadType,
-        observerId: req.body.observerId,
+        person_id: req.body.observerId,
         start_date: req.body.startDate,
         end_date: req.body.endDate,
         num_days_quality_filter: req.body.num_days_quality_filter,
@@ -68,6 +68,8 @@ interface ParamNamesBeautified {
 export var paramNamesBeautified: ParamNamesBeautified = {
     request_src: "Request Source:",
     downloadType: "Data Type:",
+    observerId: "Observer ID:",
+    person_id: "Observer ID:",
     start_date: "Start Date:",
     end_date: "End Date:",
     num_days_quality_filter: "Data Precision Filter:",
