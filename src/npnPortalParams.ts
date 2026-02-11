@@ -1,6 +1,7 @@
 export interface NpnPortalParams {
     request_src: string;
     downloadType: string;
+    observerId: number;
     start_date: string;
     end_date: string;
     num_days_quality_filter: number;
@@ -31,6 +32,7 @@ export function getNpnPortalParams(req: any): NpnPortalParams {
     let params: NpnPortalParams = {
         request_src: "dot_service",
         downloadType: req.body.downloadType,
+        observerId: req.body.observerId,
         start_date: req.body.startDate,
         end_date: req.body.endDate,
         num_days_quality_filter: req.body.num_days_quality_filter,
