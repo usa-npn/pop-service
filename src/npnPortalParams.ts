@@ -1,7 +1,6 @@
 export interface NpnPortalParams {
     request_src: string;
     downloadType: string;
-    observerId: number;
     person_id: number;
     start_date: string;
     end_date: string;
